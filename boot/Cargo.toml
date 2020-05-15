@@ -1,0 +1,12 @@
+[package]
+name = "boot"
+version = "0.0.1"
+authors = ["Yuze Fu <i@xfox.me>"]
+edition = "2018"
+description = "x86_64 UEFI BootLoader"
+
+[dependencies]
+uefi = "0.4.5"
+uefi-services = { version = "0.2" }
+log = "0.4"
+rlibc = "1.0.0"
