@@ -1,0 +1,10 @@
+[package]
+name = "kernel"
+version = "0.1.0"
+authors = ["Yuze Fu <i@xfox.me>"]
+edition = "2018"
+
+[dependencies]
+rlibc = "1.0.0"
+boot = { path = "../boot" }
+embedded-graphics = "0.6.2"

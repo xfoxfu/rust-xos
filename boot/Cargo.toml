@@ -5,8 +5,19 @@ authors = ["Yuze Fu <i@xfox.me>"]
 edition = "2018"
 description = "x86_64 UEFI BootLoader"
 
+# [dependencies]
+# uefi = "0.4.5"
+# uefi-services = { version = "0.2" }
+# log = "0.4"
+# rlibc = "1.0.0"
+
 [dependencies]
 uefi = "0.4.5"
-uefi-services = { version = "0.2" }
+uefi-services = { version = "0.2", optional = true }
 log = "0.4"
-rlibc = "1.0.0"
+xmas-elf = "0.7"
+x86_64 = "0.9"
+
+[features]
+rboot = ["uefi-services"]
+default = ["rboot"]

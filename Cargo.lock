@@ -23,10 +23,17 @@ name = "boot"
 version = "0.0.1"
 dependencies = [
  "log",
- "rlibc",
  "uefi",
  "uefi-services",
+ "x86_64 0.9.6",
+ "xmas-elf",
 ]
+
+[[package]]
+name = "byteorder"
+version = "1.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08c48aae112d48ed9f069b33538ea9e3e90aa263cfa3d1c24309612b1f7472de"
 
 [[package]]
 name = "cast"
@@ -42,6 +49,24 @@ name = "cfg-if"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
+
+[[package]]
+name = "embedded-graphics"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "40a69991ceb896bd4810a0cf2bcc46fc94b7860573c71f965d8e5b3d66942fed"
+dependencies = [
+ "byteorder",
+]
+
+[[package]]
+name = "kernel"
+version = "0.1.0"
+dependencies = [
+ "boot",
+ "embedded-graphics",
+ "rlibc",
+]
 
 [[package]]
 name = "log"
@@ -145,13 +170,14 @@ dependencies = [
 
 [[package]]
 name = "uefi-services"
-version = "0.2.3"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f07b5330a55bbb0dde643a695184fa018dca43c55d0aa8fed7bc34c44e246af"
+checksum = "97be08ee1419b9fc2c8a3d863cced9775347e3c3c58a1c05eec483e349257edc"
 dependencies = [
  "log",
+ "rlibc",
  "uefi",
- "x86_64",
+ "x86_64 0.8.3",
 ]
 
 [[package]]
@@ -170,3 +196,28 @@ dependencies = [
  "bitflags",
  "cast",
 ]
+
+[[package]]
+name = "x86_64"
+version = "0.9.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4206b60c9f99766329b66962aa8ddc01df6c7edd02edc046b7a69d5df9fcdbcf"
+dependencies = [
+ "bit_field 0.9.0",
+ "bitflags",
+]
+
+[[package]]
+name = "xmas-elf"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e74de9a366f6ab8c405fa6b371d9ac24943921fa14b3d64afcb202065c405f11"
+dependencies = [
+ "zero",
+]
+
+[[package]]
+name = "zero"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5f1bc8a6b2005884962297587045002d8cfb8dcec9db332f4ca216ddc5de82c5"
