@@ -10,13 +10,16 @@ endif
 
 .PHONY: build run header asm doc
 
-$(ESP): $(ESP)/EFI/BOOT/BOOTX64.EFI $(ESP)/KERNEL.ELF
+$(ESP): $(ESP)/EFI/BOOT/BOOTX64.EFI $(ESP)/KERNEL.ELF $(ESP)/EFI/BOOT/rboot.conf
 
 $(ESP)/EFI/BOOT/BOOTX64.EFI: target/x86_64-unknown-uefi/$(MODE)/boot.efi
-	mkdir -p $(@D)
+	@mkdir -p $(@D)
+	cp $< $@
+$(ESP)/EFI/BOOT/rboot.conf: rboot.conf
+	@mkdir -p $(@D)
 	cp $< $@
 $(ESP)/KERNEL.ELF: target/x86_64-unknown-none/$(MODE)/kernel
-	mkdir -p $(@D)
+	@mkdir -p $(@D)
 	cp $< $@
 
 target/x86_64-unknown-uefi/$(MODE)/boot.efi: boot $(shell find boot/ -type f -name '*')
