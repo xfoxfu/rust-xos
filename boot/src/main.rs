@@ -132,7 +132,7 @@ fn efi_main(image: uefi::Handle, st: SystemTable<Boot>) -> Status {
 
     info!("exit boot services");
 
-    let (_rt, mmap_iter) = st
+    let (rt, mmap_iter) = st
         .exit_boot_services(image, mmap_storage)
         .expect_success("Failed to exit boot services");
     // NOTE: alloc & log can no longer be used
@@ -142,11 +142,7 @@ fn efi_main(image: uefi::Handle, st: SystemTable<Boot>) -> Status {
         memory_map: MemoryMap { iter: mmap_iter },
         physical_memory_offset: config.physical_memory_offset,
         graphic_info,
-        acpi2_rsdp_addr: acpi2_addr as u64,
-        smbios_addr: smbios_addr as u64,
-        initramfs_addr,
-        initramfs_size,
-        cmdline: config.cmdline,
+        system_table: rt,
     };
     let stacktop = config.kernel_stack_address + config.kernel_stack_size * 0x1000;
     unsafe {

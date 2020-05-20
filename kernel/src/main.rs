@@ -9,31 +9,70 @@ use core::panic::PanicInfo;
 mod console;
 mod display;
 mod logging;
+mod uefi_clock;
 
 extern crate rlibc;
 #[macro_use]
 extern crate log;
 
+fn print_cstr16(s: &boot::CStr16) {
+    for c in s.iter() {
+        let c: char = c.clone().into();
+        print!("{}", c);
+    }
+}
+
+macro_rules! _svc {
+    ($t: path) => {
+        $t.lock().as_ref().unwrap()
+    };
+    ($t: path :mut) => {
+        $t.lock().as_mut().unwrap()
+    };
+}
+
 #[no_mangle]
-pub extern "C" fn _start(boot_info: &'static BootInfo) -> ! {
+pub extern "C" fn _start(boot_info: &'static mut BootInfo) -> ! {
     display::initialize(&boot_info.graphic_info);
-    display::DISPLAY.lock().as_mut().unwrap().clear();
+    _svc!(display::DISPLAY :mut).clear();
 
     console::initialize();
+    println!("console initialized");
+
     logging::initialize();
+    info!("logging initialized");
 
-    println!("Hello world!");
-    info!("hello world");
-    // println!("{:#x?}", boot_info);
-    println!("Hello world!");
-    warn!("some warning");
-    println!("Hello world!");
+    let rs = unsafe { boot_info.system_table.runtime_services() };
 
-    for i in 0..100 {
-        println!("Hello world! i={}", i);
+    uefi_clock::initialize(rs);
+    info!(
+        "uefi clock initialized, now = {}",
+        _svc!(uefi_clock::UEFI_CLOCK).now()
+    );
+
+    info!(
+        "kernel loaded, firmware vendor={:?} version={:?}",
+        boot_info.system_table.firmware_vendor(),
+        boot_info.system_table.firmware_revision()
+    );
+
+    for mem in boot_info.memory_map.iter.by_ref() {
+        if mem.ty == boot::MemoryType::CONVENTIONAL {
+            println!("{:x?}", mem);
+        }
     }
 
-    loop {}
+    info!("kernel exit, shutdown in 10s");
+
+    _svc!(uefi_clock::UEFI_CLOCK).spin_wait_for_ns(10_000_000_000i64);
+
+    unsafe {
+        boot_info.system_table.runtime_services().reset(
+            boot::ResetType::Shutdown,
+            boot::UefiStatus::SUCCESS,
+            None,
+        );
+    }
 }
 
 /// This function is called on panic.

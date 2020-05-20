@@ -46,6 +46,13 @@ impl Console {
         self.x_pos = 0;
     }
 
+    pub fn next_char(&mut self) {
+        self.x_pos += 1;
+        if self.x_pos >= self.size().0 {
+            self.next_row()
+        }
+    }
+
     pub fn scroll(&mut self) {
         let (_, disp_y) = DISPLAY.lock().as_ref().unwrap().resolution();
         let (_, text_y) = self.size();
@@ -72,7 +79,7 @@ impl Console {
                     .into_styled(TextStyle::new(Font8x16, Rgb888::WHITE))
                     .draw(DISPLAY.lock().as_mut().unwrap())
                     .unwrap();
-                    self.x_pos += 1;
+                    self.next_char()
                 }
             }
         }

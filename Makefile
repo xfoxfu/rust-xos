@@ -24,5 +24,5 @@ target/x86_64-unknown-uefi/$(MODE)/boot.efi: boot $(shell find boot/ -type f -na
 target/x86_64-unknown-none/$(MODE)/kernel: kernel $(shell find kernel/ -type f -name '*')
 	cargo build -p $< --target kernel/x86_64-unknown-none.json $(BUILD_ARGS)
 
-qemu-run: $(ESP)
+qemu: $(ESP)
 	qemu-system-x86_64 -bios ${OVMF} -drive format=raw,file=fat:rw:$(ESP) $(QEMU_ARGS)
