@@ -5,25 +5,32 @@
 use boot::BootInfo;
 use core::panic::PanicInfo;
 
+#[macro_use]
 mod console;
 mod display;
-mod log;
+mod logging;
 
 extern crate rlibc;
+#[macro_use]
+extern crate log;
 
 #[no_mangle]
 pub extern "C" fn _start(boot_info: &'static BootInfo) -> ! {
-    use display::GOPDisplay;
+    display::initialize(&boot_info.graphic_info);
+    display::DISPLAY.lock().as_mut().unwrap().clear();
 
-    static mut DISPLAY: Option<GOPDisplay> = None;
+    console::initialize();
+    logging::initialize();
 
-    unsafe {
-        DISPLAY = Some(GOPDisplay::new(&boot_info.graphic_info));
-    }
+    println!("Hello world!");
+    info!("hello world");
+    // println!("{:#x?}", boot_info);
+    println!("Hello world!");
+    warn!("some warning");
+    println!("Hello world!");
 
-    unsafe {
-        let mut console = console::Console::new(DISPLAY.as_mut().unwrap());
-        console.write("Hello world!\nLorem ipsum\rdolor");
+    for i in 0..100 {
+        println!("Hello world! i={}", i);
     }
 
     loop {}
@@ -31,6 +38,7 @@ pub extern "C" fn _start(boot_info: &'static BootInfo) -> ! {
 
 /// This function is called on panic.
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+fn panic(info: &PanicInfo) -> ! {
+    println!("PANIC - {}", info);
     loop {}
 }
