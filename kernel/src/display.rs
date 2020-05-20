@@ -18,7 +18,7 @@ impl<'a> DrawTarget<Rgb888> for GOPDisplay<'a> {
 
         unsafe {
             *(self.0.fb_addr as *mut u32)
-                .offset(((coord.y as usize) * self.0.mode.stride() + (coord.x as usize)) as isize)
+                .add((coord.y as usize) * self.0.mode.stride() + (coord.x as usize))
                 .as_mut()
                 .unwrap() = (color.r() as u32) << 16 | (color.g() as u32) << 8 | (color.b() as u32);
         }
@@ -27,6 +27,6 @@ impl<'a> DrawTarget<Rgb888> for GOPDisplay<'a> {
     }
     fn size(&self) -> Size {
         let (x, y) = self.0.mode.resolution();
-        return Size::new(x as u32, y as u32);
+        Size::new(x as u32, y as u32)
     }
 }
