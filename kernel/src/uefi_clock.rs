@@ -1,4 +1,4 @@
-use boot::{Runtime, RuntimeServices, SystemTable};
+use boot::RuntimeServices;
 use chrono::naive::*;
 use chrono::Duration;
 use spin::Mutex;

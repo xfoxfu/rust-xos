@@ -15,13 +15,6 @@ extern crate rlibc;
 #[macro_use]
 extern crate log;
 
-fn print_cstr16(s: &boot::CStr16) {
-    for c in s.iter() {
-        let c: char = c.clone().into();
-        print!("{}", c);
-    }
-}
-
 macro_rules! _svc {
     ($t: path) => {
         $t.lock().as_ref().unwrap()
@@ -31,8 +24,9 @@ macro_rules! _svc {
     };
 }
 
-#[no_mangle]
-pub extern "C" fn _start(boot_info: &'static mut BootInfo) -> ! {
+boot::entry_point!(kmain);
+
+pub fn kmain(boot_info: &'static BootInfo) -> ! {
     display::initialize(&boot_info.graphic_info);
     _svc!(display::DISPLAY :mut).clear();
 
@@ -56,7 +50,7 @@ pub extern "C" fn _start(boot_info: &'static mut BootInfo) -> ! {
         boot_info.system_table.firmware_revision()
     );
 
-    for mem in boot_info.memory_map.iter.by_ref() {
+    for mem in boot_info.memory_map.clone().iter {
         if mem.ty == boot::MemoryType::CONVENTIONAL {
             println!("{:x?}", mem);
         }

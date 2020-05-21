@@ -31,20 +31,13 @@ impl<'a> GOPDisplay<'a> {
         }
     }
 
-    pub fn max_x(&self) -> usize {
-        self.0.mode.resolution().0
-    }
-    pub fn max_y(&self) -> usize {
-        self.0.mode.resolution().1
-    }
-
     pub fn resolution(&self) -> (usize, usize) {
         self.0.mode.resolution()
     }
 
     pub fn scrollup_n(&self, n: u8) {
         let stride_u8 = self.0.mode.stride() * core::mem::size_of::<u32>();
-        let (xm, ym) = self.resolution();
+        let (_xm, ym) = self.resolution();
         let n = n as usize;
         for y in 0..(ym - n) {
             unsafe {

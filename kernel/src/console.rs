@@ -54,8 +54,6 @@ impl Console {
     }
 
     pub fn scroll(&mut self) {
-        let (_, disp_y) = DISPLAY.lock().as_ref().unwrap().resolution();
-        let (_, text_y) = self.size();
         DISPLAY.lock().as_mut().unwrap().scrollup_n(FONT_Y);
     }
 

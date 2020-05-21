@@ -77,14 +77,6 @@ fn efi_main(image: uefi::Handle, st: SystemTable<Boot>) -> Status {
         ENTRY = elf.header.pt2.entry_point() as usize;
     }
 
-    let (initramfs_addr, initramfs_size) = if let Some(path) = config.initramfs {
-        let mut file = open_file(bs, path);
-        let buf = load_file(bs, &mut file);
-        (buf.as_ptr() as u64, buf.len() as u64)
-    } else {
-        (0, 0)
-    };
-
     let max_mmap_size = st.boot_services().memory_map_size();
     let mmap_storage = Box::leak(vec![0; max_mmap_size].into_boxed_slice());
     let mmap_iter = st
@@ -217,7 +209,6 @@ fn init_graphic(bs: &BootServices, resolution: Option<(usize, usize)>) -> Graphi
 
 /// Get current page table from CR3
 fn current_page_table() -> OffsetPageTable<'static> {
-    info!("cr3={:?}", Cr3::read());
     let p4_table_addr = Cr3::read().0.start_address().as_u64();
     let p4_table = unsafe { &mut *(p4_table_addr as *mut PageTable) };
     unsafe { OffsetPageTable::new(p4_table, VirtAddr::new(0)) }
@@ -227,13 +218,12 @@ fn current_page_table() -> OffsetPageTable<'static> {
 struct UEFIFrameAllocator<'a>(&'a BootServices);
 
 unsafe impl FrameAllocator<Size4KiB> for UEFIFrameAllocator<'_> {
-    fn allocate_frame(&mut self) -> Option<UnusedPhysFrame> {
+    fn allocate_frame(&mut self) -> Option<PhysFrame> {
         let addr = self
             .0
             .allocate_pages(AllocateType::AnyPages, MemoryType::LOADER_DATA, 1)
             .expect_success("failed to allocate frame");
-        let frame =
-            unsafe { UnusedPhysFrame::new(PhysFrame::containing_address(PhysAddr::new(addr))) };
+        let frame = PhysFrame::containing_address(PhysAddr::new(addr));
         Some(frame)
     }
 }

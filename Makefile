@@ -1,4 +1,4 @@
-MODE ?= debug
+MODE ?= release
 OVMF := OVMF.fd
 ESP := esp
 BUILD_ARGS := -Z build-std=core,alloc
