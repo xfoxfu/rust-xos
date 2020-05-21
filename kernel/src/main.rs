@@ -44,7 +44,7 @@ pub fn kmain(boot_info: &'static BootInfo) -> ! {
     );
 
     info!(
-        "kernel loaded, firmware vendor={:?} version={:?}",
+        "kernel loaded, firmware vendor={} version={:?}",
         boot_info.system_table.firmware_vendor(),
         boot_info.system_table.firmware_revision()
     );
@@ -55,9 +55,9 @@ pub fn kmain(boot_info: &'static BootInfo) -> ! {
         }
     }
 
-    info!("kernel exit, shutdown in 10s");
+    info!("kernel exit, shutdown in 5s");
 
-    _svc!(uefi_clock::UEFI_CLOCK).spin_wait_for_ns(10_000_000_000i64);
+    _svc!(uefi_clock::UEFI_CLOCK).spin_wait_for_ns(5_000_000_000i64);
 
     unsafe {
         boot_info.system_table.runtime_services().reset(

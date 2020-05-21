@@ -5,58 +5,54 @@ use embedded_graphics::pixelcolor::{Rgb888, RgbColor};
 use embedded_graphics::{drawable::Pixel, geometry::Size, DrawTarget};
 use spin::Mutex;
 
+#[derive(Debug)]
+pub enum DisplayError {
+    OutOfBound(usize, usize),
+}
+
 pub static DISPLAY: Mutex<Option<GOPDisplay>> = Mutex::new(None);
 
 pub fn initialize(graphic: &'static GraphicInfo) {
     *DISPLAY.lock() = Some(GOPDisplay::new(graphic));
 }
 
-pub struct GOPDisplay<'a>(&'a GraphicInfo);
+pub struct GOPDisplay<'a>(&'a GraphicInfo, &'a mut [u32]);
 
 impl<'a> GOPDisplay<'a> {
     pub fn new(graphic: &'a GraphicInfo) -> Self {
-        GOPDisplay(graphic)
+        GOPDisplay(graphic, unsafe {
+            core::slice::from_raw_parts_mut(
+                graphic.fb_addr as *mut u32,
+                graphic.mode.resolution().0 * graphic.mode.stride(),
+            )
+        })
     }
 }
 
 impl<'a> GOPDisplay<'a> {
-    pub fn get_pixel(&self, x: usize, y: usize) -> u32 {
-        let (max_x, max_y) = self.resolution();
-        if x >= max_x || y >= max_y {
-            panic!("invalid position");
-        }
-
-        unsafe {
-            *(self.0.fb_addr as *mut u32)
-                .add(y * self.0.mode.stride() + x)
-                .as_mut()
-                .unwrap()
-        }
+    pub fn get_pixel(&self, x: usize, y: usize) -> Result<u32, DisplayError> {
+        Ok(*self
+            .1
+            .get(y * self.0.mode.stride() + x)
+            .ok_or_else(|| DisplayError::OutOfBound(x, y))?)
     }
-    pub fn set_pixel(&self, x: usize, y: usize, raw_color: u32) {
-        let (max_x, max_y) = self.resolution();
-        if x >= max_x || y >= max_y {
-            panic!("invalid position");
-        }
+    pub fn set_pixel(&mut self, x: usize, y: usize, raw_color: u32) -> Result<(), DisplayError> {
+        *self
+            .1
+            .get_mut(y * self.0.mode.stride() + x)
+            .ok_or_else(|| DisplayError::OutOfBound(x, y))? = raw_color;
 
-        unsafe {
-            *(self.0.fb_addr as *mut u32)
-                .add(y * self.0.mode.stride() + x)
-                .as_mut()
-                .unwrap() = raw_color;
-        }
+        Ok(())
     }
 
     pub fn clear(&mut self) {
-        for i in 0..self.0.mode.resolution().1 {
-            unsafe {
-                rlibc::memset(
-                    (self.0.fb_addr as *mut u8)
-                        .add(i * self.0.mode.stride() * core::mem::size_of::<u32>()),
-                    0,
-                    self.0.mode.stride() * 4,
-                );
-            }
+        // the following is safe because offset are computed correctly
+        unsafe {
+            rlibc::memset(
+                self.0.fb_addr as *mut u8,
+                0,
+                self.0.mode.resolution().1 * self.0.mode.stride() * 4,
+            );
         }
     }
 
@@ -69,6 +65,7 @@ impl<'a> GOPDisplay<'a> {
         let (_xm, ym) = self.resolution();
         let n = n as usize;
         for y in 0..(ym - n) {
+            // the following is safe because offset are computed correctly
             unsafe {
                 rlibc::memmove(
                     (self.0.fb_addr as *mut u8).add(y * stride_u8),
@@ -78,6 +75,7 @@ impl<'a> GOPDisplay<'a> {
             }
         }
         unsafe {
+            // the following is safe because offset are computed correctly
             rlibc::memset(
                 (self.0.fb_addr as *mut u8).add((ym - n) * stride_u8),
                 0,
@@ -88,7 +86,7 @@ impl<'a> GOPDisplay<'a> {
 }
 
 impl<'a> DrawTarget<Rgb888> for GOPDisplay<'a> {
-    type Error = &'static str;
+    type Error = DisplayError;
 
     fn draw_pixel(&mut self, pixel: Pixel<Rgb888>) -> Result<(), Self::Error> {
         let Pixel(coord, color) = pixel;
@@ -96,8 +94,9 @@ impl<'a> DrawTarget<Rgb888> for GOPDisplay<'a> {
         self.set_pixel(
             coord.x as usize,
             coord.y as usize,
+            // FIXME: currently only support BGR LE
             (color.r() as u32) << 16 | (color.g() as u32) << 8 | (color.b() as u32),
-        );
+        )?;
 
         Ok(())
     }
