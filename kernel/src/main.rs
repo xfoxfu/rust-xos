@@ -3,6 +3,7 @@
 #![feature(llvm_asm)]
 
 use boot::BootInfo;
+#[cfg(not(test))]
 use core::panic::PanicInfo;
 
 #[macro_use]
@@ -70,6 +71,7 @@ pub fn kmain(boot_info: &'static BootInfo) -> ! {
 }
 
 /// This function is called on panic.
+#[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("PANIC - {}", info);

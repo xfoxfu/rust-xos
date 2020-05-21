@@ -10,7 +10,7 @@
 #![no_std]
 #![no_main]
 #![feature(llvm_asm, abi_efiapi)]
-// #![deny(warnings)]
+#![deny(warnings)]
 
 #[macro_use]
 extern crate alloc;
