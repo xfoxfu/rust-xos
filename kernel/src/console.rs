@@ -106,3 +106,11 @@ macro_rules! println {
 pub fn _print(args: Arguments) {
     CONSOLE.lock().as_mut().unwrap().write_fmt(args).unwrap();
 }
+
+/// This function is called on panic.
+#[cfg(not(test))]
+#[panic_handler]
+fn panic(info: &core::panic::PanicInfo) -> ! {
+    println!("[PANIC] {}", info);
+    loop {}
+}

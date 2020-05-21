@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use boot::GraphicInfo;
 use embedded_graphics::pixelcolor::{Rgb888, RgbColor};
 use embedded_graphics::{drawable::Pixel, geometry::Size, DrawTarget};
@@ -18,15 +20,42 @@ impl<'a> GOPDisplay<'a> {
 }
 
 impl<'a> GOPDisplay<'a> {
+    pub fn get_pixel(&self, x: usize, y: usize) -> u32 {
+        let (max_x, max_y) = self.resolution();
+        if x >= max_x || y >= max_y {
+            panic!("invalid position");
+        }
+
+        unsafe {
+            *(self.0.fb_addr as *mut u32)
+                .add(y * self.0.mode.stride() + x)
+                .as_mut()
+                .unwrap()
+        }
+    }
+    pub fn set_pixel(&self, x: usize, y: usize, raw_color: u32) {
+        let (max_x, max_y) = self.resolution();
+        if x >= max_x || y >= max_y {
+            panic!("invalid position");
+        }
+
+        unsafe {
+            *(self.0.fb_addr as *mut u32)
+                .add(y * self.0.mode.stride() + x)
+                .as_mut()
+                .unwrap() = raw_color;
+        }
+    }
+
     pub fn clear(&mut self) {
         for i in 0..self.0.mode.resolution().1 {
-            for j in 0..self.0.mode.stride() {
-                unsafe {
-                    *(self.0.fb_addr as *mut u32)
-                        .add(i * self.0.mode.stride() + j)
-                        .as_mut()
-                        .unwrap() = 0u32;
-                }
+            unsafe {
+                rlibc::memset(
+                    (self.0.fb_addr as *mut u8)
+                        .add(i * self.0.mode.stride() * core::mem::size_of::<u32>()),
+                    0,
+                    self.0.mode.stride() * 4,
+                );
             }
         }
     }
@@ -64,12 +93,11 @@ impl<'a> DrawTarget<Rgb888> for GOPDisplay<'a> {
     fn draw_pixel(&mut self, pixel: Pixel<Rgb888>) -> Result<(), Self::Error> {
         let Pixel(coord, color) = pixel;
 
-        unsafe {
-            *(self.0.fb_addr as *mut u32)
-                .add((coord.y as usize) * self.0.mode.stride() + (coord.x as usize))
-                .as_mut()
-                .unwrap() = (color.r() as u32) << 16 | (color.g() as u32) << 8 | (color.b() as u32);
-        }
+        self.set_pixel(
+            coord.x as usize,
+            coord.y as usize,
+            (color.r() as u32) << 16 | (color.g() as u32) << 8 | (color.b() as u32),
+        );
 
         Ok(())
     }
