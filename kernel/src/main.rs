@@ -1,18 +1,21 @@
 #![no_std]
 #![no_main]
-#![feature(llvm_asm)]
+#![feature(llvm_asm, abi_x86_interrupt)]
 
 use boot::BootInfo;
 
 #[macro_use]
 mod console;
 mod display;
+mod interrupts;
 mod logging;
 mod uefi_clock;
 
 extern crate rlibc;
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate lazy_static;
 
 macro_rules! _svc {
     ($t: path) => {
@@ -34,6 +37,9 @@ pub fn kmain(boot_info: &'static BootInfo) -> ! {
 
     logging::initialize();
     info!("logging initialized");
+
+    interrupts::init();
+    info!("interrupts initialized");
 
     let rs = unsafe { boot_info.system_table.runtime_services() };
 
