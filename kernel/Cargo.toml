@@ -14,3 +14,7 @@ x86_64 = "0.11"
 spin = "0.5"
 chrono = { version = "0.4", default-features = false }
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
+bitflags = "1.2"
+bit_field = "0.10"
+pc-keyboard = "0.5"
+apic = { git = "https://github.com/rcore-os/apic-rs" }
