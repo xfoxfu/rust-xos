@@ -7,11 +7,13 @@ use x86_64::{
     structures::idt::{InterruptDescriptorTable, InterruptStackFrame},
 };
 
+/// 注册中断向量，本函数应当在中断向量表初始化代码中调用
 pub fn reg_idt(idt: &mut InterruptDescriptorTable) {
     idt[(consts::Interrupts::IRQ0 as u8 + consts::IRQ::Keyboard as u8) as usize]
         .set_handler_fn(interrupt_handler);
 }
 
+/// 初始化键盘驱动
 pub fn init() {
     use super::enable_irq;
     enable_irq(consts::IRQ::Keyboard as u8);

@@ -41,7 +41,7 @@ impl UefiClock {
         while &self.now() < time {}
     }
 
-    pub fn spin_wait_for_ns(&self, ns: i64) {
-        self.spin_wait_until(&(self.now() + Duration::nanoseconds(ns)))
+    pub fn spin_wait_for_ns(&self, ns: usize) {
+        self.spin_wait_until(&(self.now() + Duration::nanoseconds(ns as i64)))
     }
 }

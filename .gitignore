@@ -1,4 +1,6 @@
 esp
+sysroot
+sysroot.img
 OVMF.fd
 
 # Created by https://www.gitignore.io/api/rust

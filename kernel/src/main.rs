@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 #![feature(llvm_asm, abi_x86_interrupt, alloc_error_handler)]
+#![feature(type_alias_impl_trait)]
 
 use boot::BootInfo;
 use x86_64::VirtAddr;
@@ -9,6 +10,7 @@ use x86_64::VirtAddr;
 mod console;
 mod allocator;
 mod display;
+mod drivers;
 mod interrupts;
 mod logging;
 mod memory;
@@ -67,10 +69,16 @@ pub fn kmain(boot_info: &'static BootInfo) -> ! {
         }
     }
 
-    let mut mapper = unsafe { memory::init(VirtAddr::new_truncate(0xFFFF800000000000)) };
-    let mut frame_allocator =
-        unsafe { memory::BootInfoFrameAllocator::init(&boot_info.memory_map) };
-    allocator::init_heap(&mut mapper, &mut frame_allocator);
+    unsafe {
+        memory::init(
+            VirtAddr::new_truncate(0xFFFF800000000000),
+            &boot_info.memory_map,
+        );
+    }
+    allocator::init_heap(
+        memory::OFFSET_PAGE_TABLE.lock().as_mut().unwrap(),
+        memory::FRAME_ALLOCATOR.lock().as_mut().unwrap(),
+    );
 
     info!("memory allocator initialized");
 
@@ -98,9 +106,23 @@ pub fn kmain(boot_info: &'static BootInfo) -> ! {
         alloc::rc::Rc::strong_count(&cloned_reference)
     );
 
+    let mut buf = [0xFFu8; 512];
+    let mut ide = drivers::ide::IDE::from_id(1);
+    ide.init();
+    ide.read_lba(0, 1, &mut buf);
+    for i in 0..(512 / 16) {
+        for j in 0..4 {
+            for k in 0..4 {
+                print!("{:02x}", buf[i * 16 + j * 4 + k]);
+            }
+            print!(" ");
+        }
+        println!();
+    }
+
     info!("kernel exit, shutdown in 5s");
 
-    _svc!(uefi_clock::UEFI_CLOCK).spin_wait_for_ns(5_000_000_000i64);
+    _svc!(uefi_clock::UEFI_CLOCK).spin_wait_for_ns(5_000_000_000);
 
     unsafe {
         boot_info.system_table.runtime_services().reset(

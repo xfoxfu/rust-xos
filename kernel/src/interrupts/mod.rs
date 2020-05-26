@@ -22,12 +22,13 @@ pub fn init() {
 
 #[inline(always)]
 pub fn enable_irq(irq: u8) {
-    let mut ioapic = unsafe { IoApic::new(IOAPIC_ADDR as usize + 0xFFFF800000000000) };
+    let mut ioapic =
+        unsafe { IoApic::new(crate::memory::physical_to_virtual(IOAPIC_ADDR as usize)) };
     ioapic.enable(irq, 0);
 }
 
 #[inline(always)]
 pub fn ack(_irq: u8) {
-    let mut lapic = unsafe { XApic::new(LAPIC_ADDR + 0xFFFF800000000000) };
+    let mut lapic = unsafe { XApic::new(crate::memory::physical_to_virtual(LAPIC_ADDR)) };
     lapic.eoi();
 }
