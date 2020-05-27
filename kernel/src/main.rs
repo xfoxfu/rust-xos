@@ -107,9 +107,15 @@ pub fn kmain(boot_info: &'static BootInfo) -> ! {
     );
 
     let mut buf = [0xFFu8; 512];
-    let mut ide = drivers::ide::IDE::from_id(1);
+    let mut ide = drivers::ide::IDE::from_id(0);
     ide.init();
     ide.read_lba(0, 1, &mut buf);
+
+    let part = fatpart::MBRPartitionTable::parse_sector(&buf).unwrap();
+    info!("part: {:?}", part);
+    info!("read = {}", part.partition0.begin_lba);
+    ide.read_lba(part.partition0.begin_lba, 1, &mut buf);
+
     for i in 0..(512 / 16) {
         for j in 0..4 {
             for k in 0..4 {

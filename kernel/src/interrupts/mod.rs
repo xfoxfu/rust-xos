@@ -1,6 +1,7 @@
 use apic::*;
 use x86_64::structures::idt::InterruptDescriptorTable;
 
+mod apic;
 mod consts;
 mod handlers;
 mod keyboard;
@@ -18,7 +19,7 @@ pub fn init() {
     IDT.load();
     keyboard::init();
     info!("xapic support = {}", apic::XApic::support());
-    info!("x2apic support = {}", apic::X2Apic::support());
+    // info!("x2apic support = {}", apic::X2Apic::support());
     let mut xapic = unsafe { XApic::new(0xfee00000) };
     xapic.cpu_init();
 

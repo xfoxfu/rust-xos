@@ -5,7 +5,8 @@ use embedded_graphics::{
     fonts::{Font8x16, Text},
     pixelcolor::Rgb888,
     prelude::*,
-    style::TextStyle,
+    primitives::Rectangle,
+    style::{PrimitiveStyleBuilder, TextStyle},
 };
 use spin::Mutex;
 
@@ -57,6 +58,32 @@ impl Console {
         DISPLAY.lock().as_mut().unwrap().scrollup_n(FONT_Y);
     }
 
+    pub fn write_char_at(&mut self, x: usize, y: usize, c: char) {
+        let mut buf = [0u8; 2];
+        let str_c = c.encode_utf8(&mut buf);
+        Rectangle::new(
+            Point::new(x as i32 * FONT_X as i32, y as i32 * FONT_Y as i32),
+            Point::new(
+                (x + 1) as i32 * FONT_X as i32,
+                (y + 1) as i32 * FONT_Y as i32,
+            ),
+        )
+        .into_styled(
+            PrimitiveStyleBuilder::new()
+                .fill_color(Rgb888::BLACK)
+                .build(),
+        )
+        .draw(DISPLAY.lock().as_mut().unwrap())
+        .unwrap();
+        Text::new(
+            str_c,
+            Point::new(x as i32 * FONT_X as i32, y as i32 * FONT_Y as i32),
+        )
+        .into_styled(TextStyle::new(Font8x16, Rgb888::WHITE))
+        .draw(DISPLAY.lock().as_mut().unwrap())
+        .unwrap();
+    }
+
     pub fn write(&mut self, s: &str) {
         for c in s.chars() {
             match c {
@@ -65,18 +92,7 @@ impl Console {
                 }
                 // '\r' => self.x_pos = 0,
                 _ => {
-                    let mut buf = [0u8; 2];
-                    let str_c = c.encode_utf8(&mut buf);
-                    Text::new(
-                        str_c,
-                        Point::new(
-                            self.x_pos as i32 * FONT_X as i32,
-                            self.y_pos as i32 * FONT_Y as i32,
-                        ),
-                    )
-                    .into_styled(TextStyle::new(Font8x16, Rgb888::WHITE))
-                    .draw(DISPLAY.lock().as_mut().unwrap())
-                    .unwrap();
+                    self.write_char_at(self.x_pos, self.y_pos, c);
                     self.next_char()
                 }
             }

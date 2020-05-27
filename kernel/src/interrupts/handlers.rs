@@ -13,8 +13,22 @@ pub extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut InterruptStac
 }
 
 pub extern "x86-interrupt" fn clock_handler(stack_frame: &mut InterruptStackFrame) {
-    print!("*");
+    static mut chr: char = '|';
     super::ack(consts::Interrupts::IRQ0 as u8);
+    x86_64::instructions::interrupts::without_interrupts(|| unsafe {
+        chr = match chr {
+            '|' => '/',
+            '/' => '-',
+            '-' => '\\',
+            '\\' => '|',
+            _ => unreachable!(),
+        };
+        crate::console::CONSOLE
+            .lock()
+            .as_mut()
+            .unwrap()
+            .write_char_at(0, 0, chr);
+    })
 }
 
 pub extern "x86-interrupt" fn double_fault_handler(

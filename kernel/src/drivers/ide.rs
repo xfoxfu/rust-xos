@@ -34,7 +34,7 @@ impl IDE {
         unsafe {
             self.ports
                 .drive_head
-                .write(if !self.is_slave { 0xA0 } else { 0xB0 });
+                .write(0xA0 | ((self.is_slave as u8) << 4));
             self.ports.sector_count.write(0);
             self.ports.sector_number.write(0);
             self.ports.cylinder_low.write(0);

@@ -17,7 +17,7 @@ build: $(ESP) $(SYSROOT_IMG)
 $(SYSROOT_IMG): $(SYSROOT)
 	dd if=/dev/zero of=$@ bs=512 count=2880
 	mkfs.fat $@ -F12
-	mcopy -i $@ $< ::
+	cd $< && mcopy -si ../$@ . ::/
 
 $(SYSROOT):
 	@mkdir -p $(SYSROOT)
@@ -36,10 +36,13 @@ $(ESP)/KERNEL.ELF: target/x86_64-unknown-none/$(MODE)/kernel
 target/x86_64-unknown-uefi/$(MODE)/boot.efi: boot $(shell find boot/ -type f -name '*')
 	cargo build -p $< --target x86_64-unknown-uefi $(BUILD_ARGS)
 target/x86_64-unknown-none/$(MODE)/kernel: kernel $(shell find kernel/ -type f -name '*')
-	cargo build -p $< --target kernel/x86_64-unknown-none.json $(BUILD_ARGS)
+	cargo build -p $< --target x86_64-unknown-none.json $(BUILD_ARGS)
 
 qemu: build
 	qemu-system-x86_64 -bios ${OVMF} \
 	-drive format=raw,file=fat:rw:$(ESP) \
 	-drive format=raw,file=$(SYSROOT_IMG) \
 	$(QEMU_ARGS)
+
+test:
+	cargo test -p fatpart
