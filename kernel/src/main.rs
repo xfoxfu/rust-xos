@@ -78,7 +78,8 @@ pub fn kmain(boot_info: &'static BootInfo) -> ! {
     allocator::init_heap(
         memory::OFFSET_PAGE_TABLE.lock().as_mut().unwrap(),
         memory::FRAME_ALLOCATOR.lock().as_mut().unwrap(),
-    );
+    )
+    .unwrap();
 
     info!("memory allocator initialized");
 
@@ -108,13 +109,14 @@ pub fn kmain(boot_info: &'static BootInfo) -> ! {
 
     let mut buf = [0xFFu8; 512];
     let mut ide = drivers::ide::IDE::from_id(0);
-    ide.init();
-    ide.read_lba(0, 1, &mut buf);
+    ide.init().unwrap();
+    ide.read_lba(0, 1, &mut buf).unwrap();
 
     let part = fatpart::MBRPartitionTable::parse_sector(&buf).unwrap();
     info!("part: {:?}", part);
     info!("read = {}", part.partition0.begin_lba);
-    ide.read_lba(part.partition0.begin_lba, 1, &mut buf);
+    ide.read_lba(part.partition0.begin_lba, 1, &mut buf)
+        .unwrap();
 
     for i in 0..(512 / 16) {
         for j in 0..4 {

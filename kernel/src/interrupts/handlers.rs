@@ -12,11 +12,11 @@ pub extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut InterruptStac
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
 }
 
-pub extern "x86-interrupt" fn clock_handler(stack_frame: &mut InterruptStackFrame) {
-    static mut chr: char = '|';
+pub extern "x86-interrupt" fn clock_handler(_stack_frame: &mut InterruptStackFrame) {
+    static mut CHR: char = '|';
     super::ack(consts::Interrupts::IRQ0 as u8);
     x86_64::instructions::interrupts::without_interrupts(|| unsafe {
-        chr = match chr {
+        CHR = match CHR {
             '|' => '/',
             '/' => '-',
             '-' => '\\',
@@ -27,7 +27,7 @@ pub extern "x86-interrupt" fn clock_handler(stack_frame: &mut InterruptStackFram
             .lock()
             .as_mut()
             .unwrap()
-            .write_char_at(0, 0, chr);
+            .write_char_at(0, 0, CHR);
     })
 }
 

@@ -11,7 +11,7 @@ impl IDE {
     }
 
     pub fn from_id(id: u8) -> Self {
-        assert!(id >= 0 && id <= 3, "id should be in range 0 - 3");
+        assert!(/* id >= 0 && */ id <= 3, "id should be in range 0 - 3");
         Self {
             is_slave: match id {
                 0 | 2 => false,

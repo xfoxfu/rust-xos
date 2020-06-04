@@ -7,8 +7,8 @@
 //! * [sv6](https://github.com/aclements/sv6/blob/master/kernel/xapic.cc)
 //!
 //! Reference: [OSDev Wiki](https://wiki.osdev.org/APIC)
+#![allow(dead_code)]
 
-use core::fmt::Debug;
 pub use ioapic::{IoApic, IOAPIC_ADDR};
 pub use xapic::{XApic, LAPIC_ADDR};
 
