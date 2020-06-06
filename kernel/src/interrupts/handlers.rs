@@ -1,9 +1,10 @@
 use super::consts;
-use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
+use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 
 pub fn reg_idt(idt: &mut InterruptDescriptorTable) {
     idt.breakpoint.set_handler_fn(breakpoint_handler);
     idt.double_fault.set_handler_fn(double_fault_handler);
+    idt.page_fault.set_handler_fn(page_fault_handler);
     idt[(consts::Interrupts::IRQ0 as u8 + consts::IRQ::Timer as u8) as usize]
         .set_handler_fn(clock_handler);
 }
@@ -38,5 +39,17 @@ pub extern "x86-interrupt" fn double_fault_handler(
     panic!(
         "EXCEPTION: DOUBLE FAULT\n{:#?}, {}",
         stack_frame, error_code
+    );
+}
+
+pub extern "x86-interrupt" fn page_fault_handler(
+    stack_frame: &mut InterruptStackFrame,
+    error_code: PageFaultErrorCode,
+) {
+    panic!(
+        "EXCEPTION: PAGE FAULT\n{:#?}, {:?} addr={:?}",
+        stack_frame,
+        error_code,
+        x86_64::registers::control::Cr2::read()
     );
 }

@@ -5,6 +5,8 @@ use spin::Mutex;
 use x86_64::structures::paging::{FrameAllocator, OffsetPageTable, PageTable, PhysFrame, Size4KiB};
 use x86_64::{PhysAddr, VirtAddr};
 
+pub const PHYSICAL_OFFSET: u64 = 0xFFFF800000000000;
+
 pub static OFFSET_PAGE_TABLE: Mutex<Option<OffsetPageTable>> = Mutex::new(None);
 pub static FRAME_ALLOCATOR: Mutex<Option<BootInfoFrameAllocator>> = Mutex::new(None);
 
@@ -25,7 +27,7 @@ pub unsafe fn inner_init(physical_memory_offset: VirtAddr) -> OffsetPageTable<'s
 }
 
 pub fn physical_to_virtual(addr: usize) -> usize {
-    addr + 0xFFFF800000000000
+    addr + PHYSICAL_OFFSET as usize
 }
 
 /// Returns a mutable reference to the active level 4 table.

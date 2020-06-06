@@ -1,7 +1,9 @@
 [workspace]
 members = [
     "boot",
+    "elf-loader",
     "fatpart",
     "hal",
+    "hello-world",
     "kernel",
 ]

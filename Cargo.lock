@@ -28,6 +28,7 @@ checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
 name = "boot"
 version = "0.0.1"
 dependencies = [
+ "elf-loader",
  "log",
  "uefi",
  "uefi-services",
@@ -73,6 +74,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "elf-loader"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "x86_64 0.11.0",
+ "xmas-elf",
+]
+
+[[package]]
 name = "embedded-graphics"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -93,6 +103,14 @@ name = "hal"
 version = "0.1.0"
 
 [[package]]
+name = "hello-world"
+version = "0.1.0"
+dependencies = [
+ "boot",
+ "rlibc",
+]
+
+[[package]]
 name = "kernel"
 version = "0.1.0"
 dependencies = [
@@ -100,6 +118,7 @@ dependencies = [
  "bitflags",
  "boot",
  "chrono",
+ "elf-loader",
  "embedded-graphics",
  "fatpart",
  "lazy_static",

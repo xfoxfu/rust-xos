@@ -1,0 +1,12 @@
+[package]
+name = "elf-loader"
+version = "0.1.0"
+authors = ["Yuze Fu <i@xfox.me>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+xmas-elf = "0.7.0"
+x86_64 = "0.11.0"
+log = "0.4.8"

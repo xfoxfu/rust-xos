@@ -32,7 +32,6 @@ use x86_64::{PhysAddr, VirtAddr};
 use xmas_elf::ElfFile;
 
 mod config;
-mod page_table;
 
 const CONFIG_PATH: &str = "\\EFI\\BOOT\\rboot.conf";
 
@@ -97,16 +96,16 @@ fn efi_main(image: uefi::Handle, st: SystemTable<Boot>) -> Status {
         Cr0::update(|f| f.remove(Cr0Flags::WRITE_PROTECT));
         Efer::update(|f| f.insert(EferFlags::NO_EXECUTE_ENABLE));
     }
-    page_table::map_elf(&elf, &mut page_table, &mut UEFIFrameAllocator(bs))
+    elf_loader::map_elf(&elf, &mut page_table, &mut UEFIFrameAllocator(bs))
         .expect("failed to map ELF");
-    page_table::map_stack(
+    elf_loader::map_stack(
         config.kernel_stack_address,
         config.kernel_stack_size,
         &mut page_table,
         &mut UEFIFrameAllocator(bs),
     )
     .expect("failed to map stack");
-    page_table::map_physical_memory(
+    elf_loader::map_physical_memory(
         config.physical_memory_offset,
         max_phys_addr,
         &mut page_table,

@@ -1,9 +1,18 @@
+#![no_std]
+
 //! This file is modified from 'page_table.rs' in 'rust-osdev/bootloader'
+
+#[macro_use]
+extern crate log;
 
 use x86_64::structures::paging::{mapper::*, *};
 use x86_64::{align_up, PhysAddr, VirtAddr};
 use xmas_elf::{program, ElfFile};
 
+/// 加载 ELF 文件
+///
+/// 遍历 ELF 的每个段，然后将代码加载到新的帧，并设置当前的页表
+/// 不对 ELF 文件的加载地址做出假设
 pub fn map_elf(
     elf: &ElfFile,
     page_table: &mut impl Mapper<Size4KiB>,
@@ -17,6 +26,7 @@ pub fn map_elf(
     Ok(())
 }
 
+/// 加载 ELF 文件栈
 pub fn map_stack(
     addr: u64,
     pages: u64,
@@ -77,9 +87,11 @@ fn map_segment(
         let offset = frame - start_frame;
         let page = start_page + offset;
         unsafe {
-            page_table
-                .map_to(page, frame, page_table_flags, frame_allocator)?
-                .flush();
+            match page_table.map_to(page, frame, page_table_flags, frame_allocator) {
+                Ok(f) => f.flush(),
+                Err(MapToError::PageAlreadyMapped(_)) => warn!("ignored PageAlreadyMapped"),
+                Err(e) => return Err(e),
+            }
         }
     }
 

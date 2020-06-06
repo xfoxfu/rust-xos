@@ -4,7 +4,7 @@
 #![feature(type_alias_impl_trait)]
 
 use boot::BootInfo;
-use x86_64::VirtAddr;
+use x86_64::{structures::paging::FrameAllocator, VirtAddr};
 
 #[macro_use]
 mod console;
@@ -71,7 +71,7 @@ pub fn kmain(boot_info: &'static BootInfo) -> ! {
 
     unsafe {
         memory::init(
-            VirtAddr::new_truncate(0xFFFF800000000000),
+            VirtAddr::new_truncate(memory::PHYSICAL_OFFSET as u64),
             &boot_info.memory_map,
         );
     }
@@ -83,53 +83,78 @@ pub fn kmain(boot_info: &'static BootInfo) -> ! {
 
     info!("memory allocator initialized");
 
-    // allocate a number on the heap
-    let heap_value = alloc::boxed::Box::new(41);
-    println!("heap_value at {:p}", heap_value);
-
-    // create a dynamically sized vector
-    let mut vec = alloc::vec::Vec::new();
-    for i in 0..500 {
-        vec.push(i);
-    }
-    println!("vec at {:p}", vec.as_slice());
-
-    // create a reference counted vector -> will be freed when count reaches 0
-    let reference_counted = alloc::rc::Rc::new(alloc::vec![1, 2, 3]);
-    let cloned_reference = reference_counted.clone();
-    println!(
-        "current reference count is {}",
-        alloc::rc::Rc::strong_count(&cloned_reference)
-    );
-    core::mem::drop(reference_counted);
-    println!(
-        "reference count is {} now",
-        alloc::rc::Rc::strong_count(&cloned_reference)
-    );
-
-    let mut buf = [0xFFu8; 512];
-    let mut ide = drivers::ide::IDE::from_id(0);
+    let mut ide = drivers::ide::IDE::from_id(1);
     ide.init().unwrap();
-    ide.read_lba(0, 1, &mut buf).unwrap();
 
-    let part = fatpart::MBRPartitionTable::parse_sector(&buf).unwrap();
-    info!("part: {:?}", part);
-    info!("read = {}", part.partition0.begin_lba);
-    ide.read_lba(part.partition0.begin_lba, 1, &mut buf)
-        .unwrap();
-
-    for i in 0..(512 / 16) {
-        for j in 0..4 {
-            for k in 0..4 {
-                print!("{:02x}", buf[i * 16 + j * 4 + k]);
-            }
-            print!(" ");
+    info!("loading file to memory");
+    let buf = {
+        let pages = 4;
+        let mem_start = memory::FRAME_ALLOCATOR
+            .lock()
+            .as_mut()
+            .unwrap()
+            .allocate_frame()
+            .unwrap()
+            .start_address()
+            .as_u64();
+        debug!("alloc = {}", mem_start);
+        for i in 1..pages {
+            let addr = memory::FRAME_ALLOCATOR
+                .lock()
+                .as_mut()
+                .unwrap()
+                .allocate_frame()
+                .unwrap()
+                .start_address()
+                .as_u64();
+            debug!("alloc = {}", addr);
         }
-        println!();
+        let mut buf =
+            unsafe { core::slice::from_raw_parts_mut(mem_start as *mut u8, pages * 0x1000) };
+        info!("read = {}", pages as u8 * 8);
+        ide.read_lba(0, pages as u8 * 8, &mut buf).unwrap();
+        &mut buf[..pages * 0x1000]
+    };
+    info!(
+        "loaded = {:02x}{:02x}{:02x}{:02x} | {:02x}{:02x}{:02x}{:02x}",
+        buf[0x0000 + 0],
+        buf[0x0000 + 1],
+        buf[0x0000 + 2],
+        buf[0x0000 + 3],
+        buf[0x1000 + 0],
+        buf[0x1000 + 1],
+        buf[0x1000 + 2],
+        buf[0x1000 + 3]
+    );
+
+    let elf = xmas_elf::ElfFile::new(&buf).unwrap();
+    elf_loader::map_elf(
+        &elf,
+        memory::OFFSET_PAGE_TABLE.lock().as_mut().unwrap(),
+        memory::FRAME_ALLOCATOR.lock().as_mut().unwrap(),
+    )
+    .unwrap();
+    // elf_loader::map_stack(
+    //     //    0xFFFF_FF01_0000_0000
+    //     0x0000_1101_0000_0000,
+    //     //    0x0000_1111_0000_0000
+    //     512,
+    //     memory::OFFSET_PAGE_TABLE.lock().as_mut().unwrap(),
+    //     memory::FRAME_ALLOCATOR.lock().as_mut().unwrap(),
+    // )
+    // .expect("failed to map stack");
+    // let stacktop: usize = 0x0000_1101_0000_0000 + 510 * 0x1000;
+
+    info!("wait for 1s and jump to {:x}", elf.header.pt2.entry_point());
+    info!("inst = {:016x}", unsafe {
+        *(elf.header.pt2.entry_point() as *mut u64)
+    });
+    _svc!(uefi_clock::UEFI_CLOCK).spin_wait_for_ns(1_000_000_000);
+    unsafe {
+        llvm_asm!("call $0" :: "r"(elf.header.pt2.entry_point())/* , "{rsp}"(stacktop) */, "{rdi}"(boot_info) :: "intel");
     }
 
     info!("kernel exit, shutdown in 5s");
-
     _svc!(uefi_clock::UEFI_CLOCK).spin_wait_for_ns(5_000_000_000);
 
     unsafe {
