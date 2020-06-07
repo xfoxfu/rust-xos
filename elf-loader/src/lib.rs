@@ -26,6 +26,16 @@ pub fn map_elf(
     Ok(())
 }
 
+/// 卸载 ELF 文件
+pub fn unmap_elf(elf: &ElfFile, page_table: &mut impl Mapper<Size4KiB>) -> Result<(), UnmapError> {
+    info!("mapping ELF");
+    let kernel_start = PhysAddr::new(elf.input.as_ptr() as u64);
+    for segment in elf.program_iter() {
+        unmap_segment(&segment, kernel_start, page_table)?;
+    }
+    Ok(())
+}
+
 /// 加载 ELF 文件栈
 pub fn map_stack(
     addr: u64,
@@ -87,11 +97,9 @@ fn map_segment(
         let offset = frame - start_frame;
         let page = start_page + offset;
         unsafe {
-            match page_table.map_to(page, frame, page_table_flags, frame_allocator) {
-                Ok(f) => f.flush(),
-                Err(MapToError::PageAlreadyMapped(_)) => warn!("ignored PageAlreadyMapped"),
-                Err(e) => return Err(e),
-            }
+            page_table
+                .map_to(page, frame, page_table_flags, frame_allocator)?
+                .flush();
         }
     }
 
@@ -157,6 +165,65 @@ fn map_segment(
                 0,
                 (mem_size - file_size) as usize,
             );
+        }
+    }
+    Ok(())
+}
+
+fn unmap_segment(
+    segment: &program::ProgramHeader,
+    kernel_start: PhysAddr,
+    page_table: &mut impl Mapper<Size4KiB>,
+) -> Result<(), UnmapError> {
+    if segment.get_type().unwrap() != program::Type::Load {
+        return Ok(());
+    }
+    debug!("unmapping segment: {:#x?}", segment);
+    let mem_size = segment.mem_size();
+    let file_size = segment.file_size();
+    let file_offset = segment.offset() & !0xfff;
+    let phys_start_addr = kernel_start + file_offset;
+    let virt_start_addr = VirtAddr::new(segment.virtual_addr());
+
+    let start_page: Page = Page::containing_address(virt_start_addr);
+    let start_frame = PhysFrame::<Size4KiB>::containing_address(phys_start_addr);
+    let end_frame = PhysFrame::containing_address(phys_start_addr + file_size - 1u64);
+
+    let flags = segment.flags();
+    let mut page_table_flags = PageTableFlags::PRESENT;
+    if !flags.is_execute() {
+        page_table_flags |= PageTableFlags::NO_EXECUTE
+    };
+    if flags.is_write() {
+        page_table_flags |= PageTableFlags::WRITABLE
+    };
+
+    for frame in PhysFrame::range_inclusive(start_frame, end_frame) {
+        let offset = frame - start_frame;
+        let page = start_page + offset;
+        page_table.unmap(page)?.1.flush();
+    }
+
+    if mem_size > file_size {
+        // .bss section (or similar), which needs to be zeroed
+        let zero_start = virt_start_addr + file_size;
+        let zero_end = virt_start_addr + mem_size;
+        if zero_start.as_u64() & 0xfff != 0 {
+            // A part of the last mapped frame needs to be zeroed. This is
+            // not possible since it could already contains parts of the next
+            // segment. Thus, we need to copy it before zeroing.
+
+            let last_page = Page::containing_address(virt_start_addr + file_size - 1u64);
+
+            page_table.unmap(last_page)?.1.flush();
+        }
+
+        // Map additional frames.
+        let start_page: Page =
+            Page::containing_address(VirtAddr::new(align_up(zero_start.as_u64(), Size4KiB::SIZE)));
+        let end_page = Page::containing_address(zero_end);
+        for page in Page::range_inclusive(start_page, end_page) {
+            page_table.unmap(page)?.1.flush();
         }
     }
     Ok(())

@@ -5,8 +5,7 @@ use embedded_graphics::{
     fonts::{Font8x16, Text},
     pixelcolor::Rgb888,
     prelude::*,
-    primitives::Rectangle,
-    style::{PrimitiveStyleBuilder, TextStyle},
+    style::TextStyleBuilder,
 };
 use spin::Mutex;
 
@@ -61,25 +60,16 @@ impl Console {
     pub fn write_char_at(&mut self, x: usize, y: usize, c: char) {
         let mut buf = [0u8; 2];
         let str_c = c.encode_utf8(&mut buf);
-        Rectangle::new(
-            Point::new(x as i32 * FONT_X as i32, y as i32 * FONT_Y as i32),
-            Point::new(
-                (x + 1) as i32 * FONT_X as i32,
-                (y + 1) as i32 * FONT_Y as i32,
-            ),
-        )
-        .into_styled(
-            PrimitiveStyleBuilder::new()
-                .fill_color(Rgb888::BLACK)
-                .build(),
-        )
-        .draw(DISPLAY.lock().as_mut().unwrap())
-        .unwrap();
         Text::new(
             str_c,
             Point::new(x as i32 * FONT_X as i32, y as i32 * FONT_Y as i32),
         )
-        .into_styled(TextStyle::new(Font8x16, Rgb888::WHITE))
+        .into_styled(
+            TextStyleBuilder::new(Font8x16)
+                .text_color(Rgb888::WHITE)
+                .background_color(Rgb888::BLACK)
+                .build(),
+        )
         .draw(DISPLAY.lock().as_mut().unwrap())
         .unwrap();
     }
