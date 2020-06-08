@@ -5,20 +5,21 @@ authors = ["Yuze Fu <i@xfox.me>"]
 edition = "2018"
 
 [dependencies]
-rlibc = "1.0"
-boot = { path = "../boot", default-features = false }
-embedded-graphics = "0.6"
-log = "0.4"
-xmas-elf = "0.7"
-x86_64 = "0.11"
-spin = "0.5"
-chrono = { version = "0.4", default-features = false }
-lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
-bitflags = "1.2"
 bit_field = "0.10"
-pc-keyboard = "0.5"
-linked_list_allocator = "0.8"
-fatpart = { path = "../fatpart" }
-x86 = "0.33.0"
+bitflags = "1.2"
+boot = { path = "../boot", default-features = false }
+chrono = { version = "0.4", default-features = false }
 elf-loader = { path = "../elf-loader" }
+embedded-graphics = "0.6"
+fatpart = { path = "../fatpart" }
+lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
+linked_list_allocator = "0.8"
+log = "0.4"
 paste = "0.1"
+pc-keyboard = "0.5"
+rlibc = "1.0"
+spin = "0.5"
+x86 = "0.33.0"
+x86_64 = "0.11"
+xklibr = { path = "../xklibr" }
+xmas-elf = "0.7"

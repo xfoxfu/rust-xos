@@ -108,6 +108,7 @@ version = "0.1.0"
 dependencies = [
  "boot",
  "rlibc",
+ "xlibr",
 ]
 
 [[package]]
@@ -130,6 +131,7 @@ dependencies = [
  "spin",
  "x86",
  "x86_64 0.11.0",
+ "xklibr",
  "xmas-elf",
 ]
 
@@ -393,6 +395,23 @@ checksum = "365de37eb7c6da582cbb510dd0f3f1235d24ff6309a8a96e8a9909cc9bfd608f"
 dependencies = [
  "bit_field 0.9.0",
  "bitflags",
+]
+
+[[package]]
+name = "xklibr"
+version = "0.1.0"
+dependencies = [
+ "boot",
+ "chrono",
+ "embedded-graphics",
+ "rlibc",
+]
+
+[[package]]
+name = "xlibr"
+version = "0.1.0"
+dependencies = [
+ "boot",
 ]
 
 [[package]]

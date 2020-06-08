@@ -6,4 +6,6 @@ members = [
     "hal",
     "hello-world",
     "kernel",
+    "xklibr",
+    "xlibr",
 ]
