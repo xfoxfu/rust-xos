@@ -1,0 +1,12 @@
+[package]
+name = "user3"
+version = "0.1.0"
+authors = ["Yuze Fu <i@xfox.me>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+boot = { path = "../boot", default-features = false }
+xlibr = { path = "../xlibr", default-features = false }
+rlibc = "1.0.0"

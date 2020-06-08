@@ -121,7 +121,7 @@ pub fn kmain(boot_info: &'static BootInfo) -> ! {
             let mut buf =
                 unsafe { core::slice::from_raw_parts_mut(mem_start as *mut u8, pages * 0x1000) };
             info!("read = {}", pages as u8 * 8);
-            ide.read_lba(0, pages as u8 * 8, &mut buf).unwrap();
+            ide.read_lba(1 + i * 32, pages as u8 * 8, &mut buf).unwrap();
             &mut buf[..pages * 0x1000]
         };
         info!(

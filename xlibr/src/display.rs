@@ -23,8 +23,8 @@ pub fn display(
         }
     }
 
-    let mut row = base_x;
-    let mut col = base_y;
+    let mut row = base_y;
+    let mut col = base_x;
 
     let mut row_incr = 2;
     let mut col_incr = 1;

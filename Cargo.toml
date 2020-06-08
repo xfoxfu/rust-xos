@@ -4,8 +4,11 @@ members = [
     "elf-loader",
     "fatpart",
     "hal",
-    "hello-world",
     "kernel",
+    "user0",
+    "user1",
+    "user2",
+    "user3",
     "xklibr",
     "xlibr",
 ]
