@@ -21,3 +21,4 @@ linked_list_allocator = "0.8"
 fatpart = { path = "../fatpart" }
 x86 = "0.33.0"
 elf-loader = { path = "../elf-loader" }
+paste = "0.1"

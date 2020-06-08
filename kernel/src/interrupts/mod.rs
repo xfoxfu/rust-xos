@@ -15,9 +15,14 @@ lazy_static! {
     };
 }
 
-pub fn init() {
+/// 初始化中断及硬件系统
+///
+/// 需要存在有效内存
+pub unsafe fn init() {
     IDT.load();
-    keyboard::init();
+    unsafe {
+        keyboard::init();
+    }
     info!("xapic support = {}", apic::XApic::support());
     // info!("x2apic support = {}", apic::X2Apic::support());
     let mut xapic = unsafe { XApic::new(0xfee00000) };

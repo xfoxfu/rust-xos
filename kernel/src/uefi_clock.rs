@@ -3,10 +3,15 @@ use chrono::naive::*;
 use chrono::Duration;
 use spin::Mutex;
 
-pub static UEFI_CLOCK: Mutex<Option<UefiClock>> = Mutex::new(None);
+once_mutex!(pub UEFI_CLOCK: UefiClock);
 
 pub fn initialize(st: &'static RuntimeServices) {
-    *UEFI_CLOCK.lock() = Some(UefiClock::new(st));
+    init_UEFI_CLOCK(UefiClock::new(st))
+}
+
+guard_access_fn! {
+    #[doc = "获得UEFI时钟"]
+    pub get_clock(UEFI_CLOCK: UefiClock)
 }
 
 pub struct UefiClock(&'static RuntimeServices);

@@ -14,9 +14,12 @@ pub fn reg_idt(idt: &mut InterruptDescriptorTable) {
 }
 
 /// 初始化键盘驱动
-pub fn init() {
+///
+/// 需要内存初始化
+pub unsafe fn init() {
     use super::enable_irq;
     enable_irq(consts::IRQ::Keyboard as u8);
+    debug!("keyboard IRQ enabled");
 }
 
 /// Receive character from keyboard
@@ -43,11 +46,16 @@ pub fn receive() -> Option<DecodedKey> {
 }
 
 pub extern "x86-interrupt" fn interrupt_handler(_stack_frame: &mut InterruptStackFrame) {
-    super::ack(1);
+    super::ack(super::consts::IRQ::Keyboard as u8);
     if let Some(key) = receive() {
-        match key {
-            DecodedKey::Unicode(character) => print!("{}", character),
-            DecodedKey::RawKey(key) => print!("{:?}", key),
+        trace!("key readed {:?}", key);
+        if let Some(mut buf) = crate::drivers::keyboard::buffer() {
+            buf.push_back(key);
+        } else {
+            trace!(
+                "keyboard input ignored because of uninitialized keyboard driver {:?}",
+                key
+            );
         }
     }
 }

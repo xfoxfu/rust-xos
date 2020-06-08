@@ -7,7 +7,10 @@ use boot::BootInfo;
 use x86_64::{structures::paging::FrameAllocator, VirtAddr};
 
 #[macro_use]
+mod macros;
+#[macro_use]
 mod console;
+
 mod allocator;
 mod display;
 mod drivers;
@@ -37,51 +40,62 @@ macro_rules! _svc {
 boot::entry_point!(kmain);
 
 pub fn kmain(boot_info: &'static BootInfo) -> ! {
+    // 初始化显示驱动
     display::initialize(&boot_info.graphic_info);
-    _svc!(display::DISPLAY :mut).clear();
+    display::get_display_sure().clear();
 
+    // 初始化图形终端
     console::initialize();
     println!("console initialized");
 
+    // 初始化日志系统
     logging::initialize();
     info!("logging initialized");
 
-    interrupts::init();
+    // 初始化中断（CPU 异常、时钟）
+    unsafe {
+        interrupts::init();
+    }
     info!("interrupts initialized");
 
+    // 加载 UEFI 相关特性
     let rs = unsafe { boot_info.system_table.runtime_services() };
 
     uefi_clock::initialize(rs);
     info!(
         "uefi clock initialized, now = {}",
-        _svc!(uefi_clock::UEFI_CLOCK).now()
+        uefi_clock::get_clock()
+            .expect("UEFI clock not initialized")
+            .now()
     );
 
-    info!(
-        "kernel loaded, firmware vendor={} version={:?}",
-        boot_info.system_table.firmware_vendor(),
-        boot_info.system_table.firmware_revision()
-    );
-
-    for mem in boot_info.memory_map.clone().iter {
-        if mem.ty == boot::MemoryType::CONVENTIONAL {
-            println!("{:?}", mem);
-        }
-    }
-
+    // 初始化帧分配器
     unsafe {
         memory::init(
             VirtAddr::new_truncate(memory::PHYSICAL_OFFSET as u64),
             &boot_info.memory_map,
         );
     }
+    // 初始化堆内存
     allocator::init_heap(
-        memory::OFFSET_PAGE_TABLE.lock().as_mut().unwrap(),
-        memory::FRAME_ALLOCATOR.lock().as_mut().unwrap(),
+        &mut *memory::get_page_table_sure(),
+        &mut *memory::get_frame_alloc_sure(),
     )
     .unwrap();
 
     info!("memory allocator initialized");
+
+    // 初始化键盘驱动
+    unsafe {
+        drivers::keyboard::init();
+    }
+
+    // 内核加载完成
+    info!(
+        "kernel loaded, firmware vendor={} version={:?}",
+        boot_info.system_table.firmware_vendor(),
+        boot_info.system_table.firmware_revision()
+    );
 
     let mut ide = drivers::ide::IDE::from_id(1);
     ide.init().unwrap();
@@ -90,20 +104,14 @@ pub fn kmain(boot_info: &'static BootInfo) -> ! {
         info!("loading file to memory");
         let buf = {
             let pages = 4;
-            let mem_start = memory::FRAME_ALLOCATOR
-                .lock()
-                .as_mut()
-                .unwrap()
+            let mem_start = memory::get_frame_alloc_sure()
                 .allocate_frame()
                 .unwrap()
                 .start_address()
                 .as_u64();
             debug!("alloc = {}", mem_start);
             for i in 1..pages {
-                let addr = memory::FRAME_ALLOCATOR
-                    .lock()
-                    .as_mut()
-                    .unwrap()
+                let addr = memory::get_frame_alloc_sure()
                     .allocate_frame()
                     .unwrap()
                     .start_address()
@@ -131,8 +139,8 @@ pub fn kmain(boot_info: &'static BootInfo) -> ! {
         let elf = xmas_elf::ElfFile::new(&buf).unwrap();
         elf_loader::map_elf(
             &elf,
-            memory::OFFSET_PAGE_TABLE.lock().as_mut().unwrap(),
-            memory::FRAME_ALLOCATOR.lock().as_mut().unwrap(),
+            &mut *memory::get_page_table_sure(),
+            &mut *memory::get_frame_alloc_sure(),
         )
         .unwrap();
 
@@ -151,19 +159,19 @@ pub fn kmain(boot_info: &'static BootInfo) -> ! {
         info!("inst = {:016x}", unsafe {
             *(elf.header.pt2.entry_point() as *mut u64)
         });
-        _svc!(uefi_clock::UEFI_CLOCK).spin_wait_for_ns(1_000_000_000);
+        uefi_clock::get_clock_sure().spin_wait_for_ns(1_000_000_000);
         unsafe {
             llvm_asm!("call $0"
                 :: "r"(elf.header.pt2.entry_point())/* , "{rsp}"(stacktop) */, "{rdi}"(boot_info)
                 :: "intel");
         }
 
-        elf_loader::unmap_elf(&elf, memory::OFFSET_PAGE_TABLE.lock().as_mut().unwrap())
+        elf_loader::unmap_elf(&elf, &mut *memory::get_page_table_sure())
             .expect("failed to unload elf");
     }
 
     info!("kernel exit, shutdown in 5s");
-    _svc!(uefi_clock::UEFI_CLOCK).spin_wait_for_ns(5_000_000_000);
+    uefi_clock::get_clock_sure().spin_wait_for_ns(5_000_000_000);
 
     unsafe {
         boot_info.system_table.runtime_services().reset(

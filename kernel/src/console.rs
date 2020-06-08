@@ -1,4 +1,4 @@
-use crate::display::DISPLAY;
+use crate::display::get_display_sure;
 use core::fmt::Arguments;
 use core::fmt::Write;
 use embedded_graphics::{
@@ -33,7 +33,7 @@ impl Console {
 
 impl Console {
     pub fn size(&self) -> (usize, usize) {
-        let (disp_x, disp_y) = DISPLAY.lock().as_ref().unwrap().resolution();
+        let (disp_x, disp_y) = get_display_sure().resolution();
         (disp_x / FONT_X as usize, disp_y / FONT_Y as usize)
     }
 
@@ -54,7 +54,7 @@ impl Console {
     }
 
     pub fn scroll(&mut self) {
-        DISPLAY.lock().as_mut().unwrap().scrollup_n(FONT_Y);
+        get_display_sure().scrollup_n(FONT_Y);
     }
 
     pub fn write_char_at(&mut self, x: usize, y: usize, c: char) {
@@ -70,7 +70,7 @@ impl Console {
                 .background_color(Rgb888::BLACK)
                 .build(),
         )
-        .draw(DISPLAY.lock().as_mut().unwrap())
+        .draw(&mut *get_display_sure())
         .unwrap();
     }
 

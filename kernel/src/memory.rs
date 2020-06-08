@@ -7,12 +7,22 @@ use x86_64::{PhysAddr, VirtAddr};
 
 pub const PHYSICAL_OFFSET: u64 = 0xFFFF800000000000;
 
-pub static OFFSET_PAGE_TABLE: Mutex<Option<OffsetPageTable>> = Mutex::new(None);
-pub static FRAME_ALLOCATOR: Mutex<Option<BootInfoFrameAllocator>> = Mutex::new(None);
+once_mutex!(pub OFFSET_PAGE_TABLE: OffsetPageTable<'static>);
+once_mutex!(pub FRAME_ALLOCATOR: BootInfoFrameAllocator);
+
+guard_access_fn! {
+    #[doc = "当前页表"]
+    pub get_page_table(OFFSET_PAGE_TABLE: OffsetPageTable<'static>)
+}
+
+guard_access_fn! {
+    #[doc = "物理内存帧分配器"]
+    pub get_frame_alloc(FRAME_ALLOCATOR: BootInfoFrameAllocator)
+}
 
 pub unsafe fn init(physical_memory_offset: VirtAddr, memory_map: &'static MemoryMap) {
-    *OFFSET_PAGE_TABLE.lock() = Some(inner_init(physical_memory_offset));
-    *FRAME_ALLOCATOR.lock() = Some(BootInfoFrameAllocator::init(memory_map));
+    init_OFFSET_PAGE_TABLE(inner_init(physical_memory_offset));
+    init_FRAME_ALLOCATOR(BootInfoFrameAllocator::init(memory_map));
 }
 
 /// Initialize a new OffsetPageTable.

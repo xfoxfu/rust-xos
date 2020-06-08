@@ -28,7 +28,7 @@ pub extern "x86-interrupt" fn clock_handler(_stack_frame: &mut InterruptStackFra
             .lock()
             .as_mut()
             .unwrap()
-            .write_char_at(0, 0, CHR);
+            .write_char_at(79, 24, CHR);
     })
 }
 

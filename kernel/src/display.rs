@@ -10,10 +10,15 @@ pub enum DisplayError {
     OutOfBound(usize, usize),
 }
 
-pub static DISPLAY: Mutex<Option<GOPDisplay>> = Mutex::new(None);
+once_mutex!(pub DISPLAY: GOPDisplay<'static>);
 
 pub fn initialize(graphic: &'static GraphicInfo) {
-    *DISPLAY.lock() = Some(GOPDisplay::new(graphic));
+    init_DISPLAY(GOPDisplay::new(graphic));
+}
+
+guard_access_fn! {
+    #[doc = "基于GOP的显示器"]
+    pub get_display(DISPLAY: GOPDisplay<'static>)
 }
 
 pub struct GOPDisplay<'a>(&'a GraphicInfo, &'a mut [u32]);
