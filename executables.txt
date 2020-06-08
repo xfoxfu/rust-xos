@@ -1,0 +1,4 @@
+display at top-left     (press x to exit)
+display at top-right    (press x to exit)
+display at bottom-left  (press x to exit)
+display at bottom-right (press x to exit)

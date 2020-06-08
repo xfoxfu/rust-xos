@@ -20,7 +20,7 @@ endif
 
 build: $(ESP) $(SYSROOT_IMG)
 
-$(SYSROOT_IMG): \
+$(SYSROOT_IMG): executables.txt \
 	target/x86_64-unknown-xos/$(MODE)/user0 \
 	target/x86_64-unknown-xos/$(MODE)/user1 \
 	target/x86_64-unknown-xos/$(MODE)/user2 \
@@ -29,6 +29,7 @@ $(SYSROOT_IMG): \
 	dd if=/dev/zero of=$@ bs=512 count=2880
 	# mkfs.fat $@ -F12
 	# cd $< && mcopy -si ../$@ . ::/
+	dd if=executables.txt of=$@ bs=512 seek=0 conv=notrunc
 	dd if=target/x86_64-unknown-xos/$(MODE)/user0 of=$@ bs=512 seek=1 conv=notrunc
 	dd if=target/x86_64-unknown-xos/$(MODE)/user1 of=$@ bs=512 seek=33 conv=notrunc
 	dd if=target/x86_64-unknown-xos/$(MODE)/user2 of=$@ bs=512 seek=65 conv=notrunc

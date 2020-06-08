@@ -18,7 +18,7 @@ pub fn map_elf(
     page_table: &mut impl Mapper<Size4KiB>,
     frame_allocator: &mut impl FrameAllocator<Size4KiB>,
 ) -> Result<(), MapToError<Size4KiB>> {
-    info!("mapping ELF");
+    debug!("mapping ELF");
     let kernel_start = PhysAddr::new(elf.input.as_ptr() as u64);
     for segment in elf.program_iter() {
         map_segment(&segment, kernel_start, page_table, frame_allocator)?;
@@ -28,7 +28,7 @@ pub fn map_elf(
 
 /// 卸载 ELF 文件
 pub fn unmap_elf(elf: &ElfFile, page_table: &mut impl Mapper<Size4KiB>) -> Result<(), UnmapError> {
-    info!("mapping ELF");
+    debug!("unmapping ELF");
     let kernel_start = PhysAddr::new(elf.input.as_ptr() as u64);
     for segment in elf.program_iter() {
         unmap_segment(&segment, kernel_start, page_table)?;
@@ -43,7 +43,7 @@ pub fn map_stack(
     page_table: &mut impl Mapper<Size4KiB>,
     frame_allocator: &mut impl FrameAllocator<Size4KiB>,
 ) -> Result<(), MapToError<Size4KiB>> {
-    info!("mapping stack at {:#x}", addr);
+    debug!("mapping stack at {:#x}", addr);
     // create a stack
     let stack_start = Page::containing_address(VirtAddr::new(addr));
     let stack_end = stack_start + pages;
@@ -237,7 +237,7 @@ pub fn map_physical_memory(
     page_table: &mut impl Mapper<Size2MiB>,
     frame_allocator: &mut impl FrameAllocator<Size4KiB>,
 ) {
-    info!("mapping physical memory");
+    debug!("mapping physical memory");
     let start_frame = PhysFrame::containing_address(PhysAddr::new(0));
     let end_frame = PhysFrame::containing_address(PhysAddr::new(max_addr));
     for frame in PhysFrame::range_inclusive(start_frame, end_frame) {

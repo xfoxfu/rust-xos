@@ -12,14 +12,16 @@ pub fn display(
     max_y: isize,
     iters: usize,
 ) {
-    let mode = boot_info.graphic_info.mode;
-    let (display_x, display_y) = mode.resolution();
-    let (display_x, display_y) = (display_x as isize, display_y as isize);
+    let stride = boot_info.graphic_info.mode.stride() as isize;
     let fb_addr = boot_info.graphic_info.fb_addr;
 
-    for i in 0..display_x * display_y {
-        unsafe {
-            *(fb_addr as *mut u32).offset(i).as_mut().unwrap() = 0x000F0F0F;
+    for i in base_x..max_x {
+        for j in base_y..max_y {
+            unsafe {
+                (fb_addr as *mut u32)
+                    .offset(j * stride + i)
+                    .write_volatile(0x000F0F0F)
+            }
         }
     }
 
@@ -33,7 +35,7 @@ pub fn display(
         if col >= base_x && col < max_x && row >= base_y && row < max_y {
             unsafe {
                 *(fb_addr as *mut u32)
-                    .offset(row * display_x + col)
+                    .offset(row * stride + col)
                     .as_mut()
                     .unwrap() = COLORS[color];
             }

@@ -1,14 +1,17 @@
 use alloc::collections::VecDeque;
+use alloc::string::String;
 use pc_keyboard::DecodedKey;
 use spin::Mutex;
 
 once_mutex!(KEY_BUFFER: VecDeque<DecodedKey>);
 
+const DEFAULT_CAPACITY: usize = 80;
+
 /// 初始化键盘输入设备
 ///
 /// 需要确保内存已经初始化；在键盘中断初始化完成前，无法获得输入
 pub unsafe fn init() {
-    init_KEY_BUFFER(VecDeque::with_capacity(80));
+    init_KEY_BUFFER(VecDeque::with_capacity(DEFAULT_CAPACITY));
     debug!("keybaord buffer initialized");
 }
 
@@ -16,7 +19,7 @@ guard_access_fn!(pub buffer(KEY_BUFFER: VecDeque<DecodedKey>));
 
 /// 读取按键，非阻塞
 pub fn get_key() -> Option<DecodedKey> {
-    x86_64::instructions::interrupts::without_interrupts(|| buffer()?.front().copied())
+    x86_64::instructions::interrupts::without_interrupts(|| buffer()?.pop_front())
 }
 
 /// 读取按键，阻塞直到存在按键
@@ -26,4 +29,17 @@ pub fn get_key_block() -> DecodedKey {
             return k;
         }
     }
+}
+
+/// 读取一行输入
+pub fn getline_block() -> String {
+    let mut s = String::with_capacity(DEFAULT_CAPACITY);
+    while let DecodedKey::Unicode(k) = get_key_block() {
+        print!("{}", k);
+        match k {
+            '\n' => break,
+            c => s.push(c),
+        }
+    }
+    s
 }
