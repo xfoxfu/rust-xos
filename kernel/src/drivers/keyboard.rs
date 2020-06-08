@@ -33,16 +33,21 @@ pub fn get_key_block() -> DecodedKey {
 
 /// 读取一行输入
 pub fn getline_block() -> String {
+    use crate::console::get_console_sure;
+
     let mut s = String::with_capacity(DEFAULT_CAPACITY);
     while let DecodedKey::Unicode(k) = get_key_block() {
         match k {
-            '\n' => break,
+            '\n' => {
+                println!();
+                break;
+            }
             // backspace
             '\x08' => {
                 if s.len() > 0 {
                     crate::console::get_console_sure().move_cursor(-1, 0);
-                    print!(" ");
-                    crate::console::get_console_sure().move_cursor(-1, 0);
+                    print!("  "); // draw a char more to clear hint
+                    crate::console::get_console_sure().move_cursor(-2, 0);
                     s.pop(); // remove previous char
                 }
             }
@@ -51,6 +56,7 @@ pub fn getline_block() -> String {
                 s.push(c)
             }
         }
+        get_console_sure().draw_hint();
     }
     s
 }

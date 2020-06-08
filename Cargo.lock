@@ -119,6 +119,7 @@ dependencies = [
  "micromath",
  "paste",
  "pc-keyboard",
+ "profont",
  "rlibc",
  "spin",
  "x86",
@@ -229,6 +230,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8872cf6f48eee44265156c111456a700ab3483686b3f96df4cf5481c89157319"
 dependencies = [
  "unicode-xid",
+]
+
+[[package]]
+name = "profont"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f2f6adcc3c0b616b2075b492b29404966c1de661d68fad58698f8dfb133e25b"
+dependencies = [
+ "embedded-graphics",
 ]
 
 [[package]]

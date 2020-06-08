@@ -2,17 +2,19 @@ use crate::display::get_display_sure;
 use core::fmt::Arguments;
 use core::fmt::Write;
 use embedded_graphics::{
-    fonts::{Font8x16, Text},
+    fonts::Text,
     pixelcolor::Rgb888,
     prelude::*,
-    style::TextStyleBuilder,
+    primitives::Line,
+    style::{PrimitiveStyle, TextStyleBuilder},
 };
+use profont::ProFont12Point;
 use spin::Mutex;
 
 once_mutex!(pub CONSOLE: Console);
 
 const FONT_X: u8 = 8;
-const FONT_Y: u8 = 16;
+const FONT_Y: u8 = 15;
 
 pub fn initialize() {
     init_CONSOLE(Console::new());
@@ -37,6 +39,10 @@ impl Console {
     pub fn size(&self) -> (usize, usize) {
         let (disp_x, disp_y) = get_display_sure().resolution();
         (disp_x / FONT_X as usize, disp_y / FONT_Y as usize)
+    }
+
+    fn get_char_pos(&self, x: usize, y: usize) -> (usize, usize) {
+        (x * FONT_X as usize, y * FONT_Y as usize)
     }
 
     pub fn next_row(&mut self) {
@@ -67,7 +73,7 @@ impl Console {
             Point::new(x as i32 * FONT_X as i32, y as i32 * FONT_Y as i32),
         )
         .into_styled(
-            TextStyleBuilder::new(Font8x16)
+            TextStyleBuilder::new(ProFont12Point)
                 .text_color(Rgb888::WHITE)
                 .background_color(Rgb888::BLACK)
                 .build(),
@@ -94,6 +100,20 @@ impl Console {
     pub fn move_cursor(&mut self, dx: isize, dy: isize) {
         self.x_pos = (self.x_pos as isize + dx) as usize;
         self.y_pos = (self.y_pos as isize + dy) as usize;
+    }
+
+    pub fn draw_hint(&mut self) {
+        let (x, y) = (self.x_pos, self.y_pos);
+        let (cx, cy) = self.get_char_pos(x, y);
+        Line::new(
+            // Point::new(x as i32 * FONT_X as i32, y as i32 * FONT_Y as i32),
+            // Point::new(x as i32 * FONT_X as i32, (y + 1) as i32 * FONT_Y as i32 - 1),
+            Point::new(cx as i32, cy as i32),
+            Point::new(cx as i32, cy as i32 + FONT_Y as i32 - 1),
+        )
+        .into_styled(PrimitiveStyle::with_stroke(Rgb888::WHITE, 1))
+        .draw(&mut *get_display_sure())
+        .unwrap(); // FIXME: report error later
     }
 }
 
