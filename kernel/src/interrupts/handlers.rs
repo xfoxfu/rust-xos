@@ -1,4 +1,5 @@
 use super::consts;
+use micromath::F32Ext;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 
 pub fn reg_idt(idt: &mut InterruptDescriptorTable) {
@@ -14,21 +15,47 @@ pub extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut InterruptStac
 }
 
 pub extern "x86-interrupt" fn clock_handler(_stack_frame: &mut InterruptStackFrame) {
-    static mut CHR: char = '|';
+    static angle: spin::Mutex<u16> = spin::Mutex::new(90);
+    const ANGLE_INCR: u16 = 15;
     super::ack(consts::Interrupts::IRQ0 as u8);
     x86_64::instructions::interrupts::without_interrupts(|| unsafe {
-        CHR = match CHR {
-            '|' => '/',
-            '/' => '-',
-            '-' => '\\',
-            '\\' => '|',
-            _ => unreachable!(),
-        };
-        crate::console::CONSOLE
-            .lock()
-            .as_mut()
-            .unwrap()
-            .write_char_at(79, 24, CHR);
+        use embedded_graphics::drawable::*;
+        use embedded_graphics::pixelcolor::*;
+        use embedded_graphics::prelude::*;
+        use embedded_graphics::primitives::*;
+        use embedded_graphics::style::*;
+
+        let value;
+        // 自增
+        if let Some(mut angle_locked) = angle.try_lock() {
+            *angle_locked += ANGLE_INCR;
+            if *angle_locked >= 360 {
+                *angle_locked = 0;
+            }
+            value = *angle_locked as f32 / 180f32 * core::f32::consts::PI;
+        } else {
+            value = 0.0;
+        }
+
+        let (cx, cy) = (8 * 79, 16 * 24);
+        let len = 16u32;
+
+        let (dx, dy) = (
+            (len as f32 * value.cos()) as i32,
+            (len as f32 * value.sin()) as i32,
+        );
+
+        if let Some(mut display) = crate::display::get_display() {
+            Circle::new(Point::new(cx, cy), len)
+                .into_styled(PrimitiveStyle::with_fill(Rgb888::WHITE))
+                .draw(&mut *display)
+                .unwrap(); // FIXME: report error later
+
+            Line::new(Point::new(cx, cy), Point::new(cx - dx, cy - dy))
+                .into_styled(PrimitiveStyle::with_stroke(Rgb888::BLACK, 3))
+                .draw(&mut *display)
+                .unwrap(); // FIXME: report error later
+        }
     })
 }
 

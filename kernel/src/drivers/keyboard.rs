@@ -35,10 +35,21 @@ pub fn get_key_block() -> DecodedKey {
 pub fn getline_block() -> String {
     let mut s = String::with_capacity(DEFAULT_CAPACITY);
     while let DecodedKey::Unicode(k) = get_key_block() {
-        print!("{}", k);
         match k {
             '\n' => break,
-            c => s.push(c),
+            // backspace
+            '\x08' => {
+                if s.len() > 0 {
+                    crate::console::get_console_sure().move_cursor(-1, 0);
+                    print!(" ");
+                    crate::console::get_console_sure().move_cursor(-1, 0);
+                    s.pop(); // remove previous char
+                }
+            }
+            c => {
+                print!("{}", k);
+                s.push(c)
+            }
         }
     }
     s

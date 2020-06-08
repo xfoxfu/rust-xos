@@ -62,11 +62,13 @@ fn run_program(id: u32, boot_info: &'static BootInfo, ide: &mut IDE) {
         *(elf.header.pt2.entry_point() as *mut u64)
     });
     crate::uefi_clock::get_clock_sure().spin_wait_for_ns(1_000_000_000);
+    *crate::interrupts::get_user_running_sure() = true;
     unsafe {
         llvm_asm!("call $0"
             :: "r"(elf.header.pt2.entry_point())/* , "{rsp}"(stacktop) */, "{rdi}"(boot_info)
             :: "intel");
     }
+    *crate::interrupts::get_user_running_sure() = false;
 
     elf_loader::unmap_elf(&elf, &mut *crate::memory::get_page_table_sure())
         .expect("failed to unload elf");
@@ -92,7 +94,7 @@ fn main_iter(boot_info: &'static BootInfo, ide: &mut IDE, progs: &Vec<String>) -
         match c {
             '0'..='9' => {
                 let id = c as u32 - '0' as u32;
-                if (id as usize) < prog.len() {
+                if (id as usize) < progs.len() {
                     run_program(id, boot_info, ide);
                 } else {
                     println!("unknown process {}", id)

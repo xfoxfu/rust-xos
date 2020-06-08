@@ -7,6 +7,9 @@ use x86_64::{
     structures::idt::{InterruptDescriptorTable, InterruptStackFrame},
 };
 
+once_mutex!(pub USER_RUNNING: bool);
+guard_access_fn!(pub get_user_running(USER_RUNNING: bool));
+
 /// 注册中断向量，本函数应当在中断向量表初始化代码中调用
 pub fn reg_idt(idt: &mut InterruptDescriptorTable) {
     idt[(consts::Interrupts::IRQ0 as u8 + consts::IRQ::Keyboard as u8) as usize]
@@ -18,6 +21,7 @@ pub fn reg_idt(idt: &mut InterruptDescriptorTable) {
 /// 需要内存初始化
 pub unsafe fn init() {
     use super::enable_irq;
+    init_USER_RUNNING(false);
     enable_irq(consts::IRQ::Keyboard as u8);
     debug!("keyboard IRQ enabled");
 }
@@ -47,15 +51,19 @@ pub fn receive() -> Option<DecodedKey> {
 
 pub extern "x86-interrupt" fn interrupt_handler(_stack_frame: &mut InterruptStackFrame) {
     super::ack(super::consts::IRQ::Keyboard as u8);
-    if let Some(key) = receive() {
-        trace!("key readed {:?}", key);
-        if let Some(mut buf) = crate::drivers::keyboard::buffer() {
-            buf.push_back(key);
-        } else {
-            trace!(
-                "keyboard input ignored because of uninitialized keyboard driver {:?}",
-                key
-            );
+    if !*get_user_running_sure() {
+        if let Some(key) = receive() {
+            trace!("key readed {:?}", key);
+            if let Some(mut buf) = crate::drivers::keyboard::buffer() {
+                buf.push_back(key);
+            } else {
+                trace!(
+                    "keyboard input ignored because of uninitialized keyboard driver {:?}",
+                    key
+                );
+            }
         }
+    } else {
+        error!("OUCH!");
     }
 }

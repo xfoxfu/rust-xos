@@ -15,6 +15,7 @@ fatpart = { path = "../fatpart" }
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 linked_list_allocator = "0.8"
 log = "0.4"
+micromath = "1.0"
 paste = "0.1"
 pc-keyboard = "0.5"
 rlibc = "1.0"

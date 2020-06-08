@@ -6,6 +6,8 @@ mod consts;
 mod handlers;
 mod keyboard;
 
+pub use keyboard::{get_user_running, get_user_running_sure};
+
 lazy_static! {
     static ref IDT: InterruptDescriptorTable = {
         let mut idt = InterruptDescriptorTable::new();

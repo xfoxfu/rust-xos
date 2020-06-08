@@ -9,14 +9,16 @@ use embedded_graphics::{
 };
 use spin::Mutex;
 
-pub static CONSOLE: Mutex<Option<Console>> = Mutex::new(None);
+once_mutex!(pub CONSOLE: Console);
 
 const FONT_X: u8 = 8;
 const FONT_Y: u8 = 16;
 
 pub fn initialize() {
-    *CONSOLE.lock() = Some(Console::new());
+    init_CONSOLE(Console::new());
 }
+
+guard_access_fn!(pub get_console (CONSOLE: Console));
 
 pub struct Console {
     x_pos: usize,
@@ -88,6 +90,11 @@ impl Console {
             }
         }
     }
+
+    pub fn move_cursor(&mut self, dx: isize, dy: isize) {
+        self.x_pos = (self.x_pos as isize + dx) as usize;
+        self.y_pos = (self.y_pos as isize + dy) as usize;
+    }
 }
 
 impl Write for Console {
@@ -113,7 +120,7 @@ pub fn _print(args: Arguments) {
     use x86_64::instructions::interrupts;
 
     interrupts::without_interrupts(|| {
-        CONSOLE.lock().as_mut().unwrap().write_fmt(args).unwrap();
+        get_console_sure().write_fmt(args).unwrap();
     });
 }
 

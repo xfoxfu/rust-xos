@@ -116,6 +116,7 @@ dependencies = [
  "lazy_static",
  "linked_list_allocator",
  "log",
+ "micromath",
  "paste",
  "pc-keyboard",
  "rlibc",
@@ -161,6 +162,12 @@ checksum = "14b6052be84e6b71ab17edffc2eeabf5c2c3ae1fdb464aae35ac50c67a44e1f7"
 dependencies = [
  "cfg-if",
 ]
+
+[[package]]
+name = "micromath"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c61d2b2dd22f6e15164f8ae1b6cec2028662c57e210c5809328bd065f92eba13"
 
 [[package]]
 name = "num-integer"
