@@ -17,9 +17,7 @@ pub fn reg_idt(idt: &mut InterruptDescriptorTable) {
 }
 
 /// 初始化键盘驱动
-///
-/// 需要内存初始化
-pub unsafe fn init() {
+pub fn init() {
     use super::enable_irq;
     init_USER_RUNNING(false);
     enable_irq(consts::IRQ::Keyboard as u8);
@@ -51,8 +49,8 @@ pub fn receive() -> Option<DecodedKey> {
 
 pub extern "x86-interrupt" fn interrupt_handler(_stack_frame: &mut InterruptStackFrame) {
     super::ack(super::consts::IRQ::Keyboard as u8);
-    if !*get_user_running_sure() {
-        if let Some(key) = receive() {
+    if let Some(key) = receive() {
+        if !*get_user_running_sure() {
             trace!("key readed {:?}", key);
             if let Some(mut buf) = crate::drivers::keyboard::buffer() {
                 buf.push_back(key);
@@ -62,8 +60,8 @@ pub extern "x86-interrupt" fn interrupt_handler(_stack_frame: &mut InterruptStac
                     key
                 );
             }
+        } else {
+            error!("OUCH!");
         }
-    } else {
-        error!("OUCH!");
     }
 }

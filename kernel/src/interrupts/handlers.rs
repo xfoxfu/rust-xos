@@ -15,10 +15,10 @@ pub extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut InterruptStac
 }
 
 pub extern "x86-interrupt" fn clock_handler(_stack_frame: &mut InterruptStackFrame) {
-    static angle: spin::Mutex<u16> = spin::Mutex::new(90);
+    static ANGLE: spin::Mutex<u16> = spin::Mutex::new(90);
     const ANGLE_INCR: u16 = 15;
     super::ack(consts::Interrupts::IRQ0 as u8);
-    x86_64::instructions::interrupts::without_interrupts(|| unsafe {
+    x86_64::instructions::interrupts::without_interrupts(|| {
         use embedded_graphics::drawable::*;
         use embedded_graphics::pixelcolor::*;
         use embedded_graphics::prelude::*;
@@ -27,7 +27,7 @@ pub extern "x86-interrupt" fn clock_handler(_stack_frame: &mut InterruptStackFra
 
         let value;
         // 自增
-        if let Some(mut angle_locked) = angle.try_lock() {
+        if let Some(mut angle_locked) = ANGLE.try_lock() {
             *angle_locked += ANGLE_INCR;
             if *angle_locked >= 360 {
                 *angle_locked = 0;

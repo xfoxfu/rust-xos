@@ -9,13 +9,15 @@
 
 #![no_std]
 #![no_main]
-#![feature(llvm_asm, abi_efiapi)]
+#![feature(asm, abi_efiapi)]
 #![deny(warnings)]
 
 #[macro_use]
 extern crate alloc;
 #[macro_use]
 extern crate log;
+
+extern crate rlibc;
 
 use alloc::boxed::Box;
 use boot::{BootInfo, GraphicInfo, MemoryMap};
@@ -282,7 +284,7 @@ extern "efiapi" fn ap_main(_arg: *mut core::ffi::c_void) {
 
 /// Jump to ELF entry according to global variable `ENTRY`
 unsafe fn jump_to_entry(bootinfo: *const BootInfo, stacktop: u64) -> ! {
-    llvm_asm!("call $0" :: "r"(ENTRY), "{rsp}"(stacktop), "{rdi}"(bootinfo) :: "intel");
+    asm!("mov rsp, {1}; call {}", in(reg) ENTRY, in(reg) stacktop, in("rdi") bootinfo);
     loop {}
 }
 

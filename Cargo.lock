@@ -30,9 +30,10 @@ version = "0.0.1"
 dependencies = [
  "elf-loader",
  "log",
+ "rlibc",
  "uefi",
  "uefi-services",
- "x86_64 0.11.0",
+ "x86_64",
  "xmas-elf",
 ]
 
@@ -41,15 +42,6 @@ name = "byteorder"
 version = "1.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08c48aae112d48ed9f069b33538ea9e3e90aa263cfa3d1c24309612b1f7472de"
-
-[[package]]
-name = "cast"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b9434b9a5aa1450faa3f9cb14ea0e8c53bb5d2b3c1bfd1ab4fc03e9f33fbfb0"
-dependencies = [
- "rustc_version",
-]
 
 [[package]]
 name = "cc"
@@ -78,7 +70,7 @@ name = "elf-loader"
 version = "0.1.0"
 dependencies = [
  "log",
- "x86_64 0.11.0",
+ "x86_64",
  "xmas-elf",
 ]
 
@@ -123,7 +115,7 @@ dependencies = [
  "rlibc",
  "spin",
  "x86",
- "x86_64 0.11.0",
+ "x86_64",
  "xklibr",
  "xmas-elf",
 ]
@@ -357,14 +349,13 @@ dependencies = [
 
 [[package]]
 name = "uefi-services"
-version = "0.2.2"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97be08ee1419b9fc2c8a3d863cced9775347e3c3c58a1c05eec483e349257edc"
+checksum = "8a985e3dd3e8ce234af981948ff1138e72936af03b04a90b082f9d8a6f35ad37"
 dependencies = [
  "log",
- "rlibc",
  "uefi",
- "x86_64 0.8.3",
+ "x86_64",
 ]
 
 [[package]]
@@ -418,17 +409,6 @@ dependencies = [
  "bit_field 0.10.0",
  "bitflags",
  "raw-cpuid",
-]
-
-[[package]]
-name = "x86_64"
-version = "0.8.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d9e3e26fcb51976eafa310e8f2b7a5a83ae8c185443efe50cbc6534a4fffa0d"
-dependencies = [
- "bit_field 0.9.0",
- "bitflags",
- "cast",
 ]
 
 [[package]]

@@ -3,7 +3,6 @@ use bit_field::BitField;
 use core::fmt::{Debug, Error, Formatter};
 use core::ptr::{read_volatile, write_volatile};
 use x86::cpuid::CpuId;
-use x86::io::outb;
 
 pub struct XApic {
     addr: usize,
@@ -11,12 +10,14 @@ pub struct XApic {
 
 impl XApic {
     unsafe fn read(&self, reg: u32) -> u32 {
-        read_volatile((self.addr + reg as usize) as *const u32)
+        unsafe { read_volatile((self.addr + reg as usize) as *const u32) }
     }
 
     unsafe fn write(&mut self, reg: u32, value: u32) {
-        write_volatile((self.addr + reg as usize) as *mut u32, value);
-        self.read(0x20); // wait for write to finish, by reading
+        unsafe {
+            write_volatile((self.addr + reg as usize) as *mut u32, value);
+            self.read(0x20);
+        } // wait for write to finish, by reading
     }
 }
 
@@ -98,44 +99,6 @@ impl LocalApic for XApic {
     fn eoi(&mut self) {
         unsafe {
             self.write(EOI, 0);
-        }
-    }
-
-    /// The entry point `addr` must be 4K aligned.
-    /// This function will access memory: 0x467
-    unsafe fn start_ap(&mut self, apic_id: u8, addr: u32) {
-        assert_eq!(
-            addr & 0xfff,
-            0,
-            "The entry point address must be 4K aligned"
-        );
-
-        // "The BSP must initialize CMOS shutdown code to 0AH
-        // and the warm reset vector (DWORD based at 40:67) to point at
-        // the AP startup code prior to the [universal startup algorithm]."
-        outb(CMOS_PORT, 0xf); // offset 0xF is shutdown code
-        outb(CMOS_RETURN, 0xa);
-
-        let wrv = (0x40 << 4 | 0x67) as *mut u16; // Warm reset vector
-        *wrv = 0;
-        *wrv.add(1) = addr as u16 >> 4;
-
-        // "Universal startup algorithm."
-        // Send INIT (level-triggered) interrupt to reset other CPU.
-        self.write(ICRHI, (apic_id as u32) << 24);
-        self.write(ICRLO, INIT | LEVEL | ASSERT);
-        microdelay(200);
-        self.write(ICRLO, INIT | LEVEL);
-        microdelay(10000);
-
-        // Send startup IPI (twice!) to enter code.
-        // Regular hardware is supposed to only accept a STARTUP
-        // when it is in the halted state due to an INIT.  So the second
-        // should be ignored, but it is part of the official Intel algorithm.
-        for _ in 0..2 {
-            self.write(ICRHI, (apic_id as u32) << 24);
-            self.write(ICRLO, STARTUP | (addr >> 12) as u32);
-            microdelay(200);
         }
     }
 }

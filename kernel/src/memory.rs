@@ -21,8 +21,8 @@ guard_access_fn! {
 }
 
 pub unsafe fn init(physical_memory_offset: VirtAddr, memory_map: &'static MemoryMap) {
-    init_OFFSET_PAGE_TABLE(inner_init(physical_memory_offset));
-    init_FRAME_ALLOCATOR(BootInfoFrameAllocator::init(memory_map));
+    init_OFFSET_PAGE_TABLE(unsafe { inner_init(physical_memory_offset) });
+    init_FRAME_ALLOCATOR(unsafe { BootInfoFrameAllocator::init(memory_map) });
 }
 
 /// Initialize a new OffsetPageTable.
@@ -32,8 +32,8 @@ pub unsafe fn init(physical_memory_offset: VirtAddr, memory_map: &'static Memory
 /// `physical_memory_offset`. Also, this function must be only called once
 /// to avoid aliasing `&mut` references (which is undefined behavior).
 pub unsafe fn inner_init(physical_memory_offset: VirtAddr) -> OffsetPageTable<'static> {
-    let level_4_table = active_level_4_table(physical_memory_offset);
-    OffsetPageTable::new(level_4_table, physical_memory_offset)
+    let level_4_table = unsafe { active_level_4_table(physical_memory_offset) };
+    unsafe { OffsetPageTable::new(level_4_table, physical_memory_offset) }
 }
 
 pub fn physical_to_virtual(addr: usize) -> usize {
@@ -55,7 +55,7 @@ unsafe fn active_level_4_table(physical_memory_offset: VirtAddr) -> &'static mut
     let virt = physical_memory_offset + phys.as_u64();
     let page_table_ptr: *mut PageTable = virt.as_mut_ptr();
 
-    &mut *page_table_ptr // unsafe
+    unsafe { &mut *page_table_ptr }
 }
 
 type BootInfoFrameIter = impl Iterator<Item = PhysFrame>;

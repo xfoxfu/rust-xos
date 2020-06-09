@@ -38,10 +38,7 @@ pub fn getline_block() -> String {
     let mut s = String::with_capacity(DEFAULT_CAPACITY);
     while let DecodedKey::Unicode(k) = get_key_block() {
         match k {
-            '\n' => {
-                println!();
-                break;
-            }
+            '\n' => break,
             // backspace
             '\x08' => {
                 if s.len() > 0 {
@@ -58,5 +55,6 @@ pub fn getline_block() -> String {
         }
         get_console_sure().draw_hint();
     }
+    println!();
     s
 }

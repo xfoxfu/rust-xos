@@ -85,8 +85,14 @@ impl IDE {
                 // TODO: find out why
                 debug!("read offset = {}", i as usize * 512usize);
 
-                // Transfer 256 16-bit values, a uint16_t at a time, into your buffer from I/O port 0x1F0. (In assembler, REP INSW works well for this.)
-                llvm_asm!("rep insw" :: "{dx}"(self.ports.io_base), "{rdi}"(&target[i as usize * 512usize ]), "{cx}"(256usize) : "rdi" : "volatile");
+                // Transfer 256 16-bit values, a uint16_t at a time, into your buffer from I/O port 0x1F0.
+                // (In assembler, REP INSW works well for this.)
+                asm!("rep insw",
+                    in("dx") self.ports.io_base,
+                    in("rdi") &target[i as usize * 512usize ],
+                    in("cx") 256usize,
+                    lateout("rdi") _
+                );
             }
         }
 

@@ -8,7 +8,7 @@ use x86_64::structures::paging::FrameAllocator;
 
 fn list(ide: &mut IDE) -> Vec<String> {
     let mut buf = vec![0; 512];
-    ide.read_lba(0, 1, &mut buf);
+    ide.read_lba(0, 1, &mut buf).expect("failed to read disk");
 
     buf.resize(buf.iter().position(|v| v == &b'\0').unwrap(), 0);
 
@@ -31,7 +31,7 @@ fn run_program(id: u32, boot_info: &'static BootInfo, ide: &mut IDE) {
             .start_address()
             .as_u64();
         trace!("alloc = {}", mem_start);
-        for i in 1..pages {
+        for _ in 1..pages {
             let addr = crate::memory::get_frame_alloc_sure()
                 .allocate_frame()
                 .unwrap()
@@ -64,9 +64,7 @@ fn run_program(id: u32, boot_info: &'static BootInfo, ide: &mut IDE) {
     crate::uefi_clock::get_clock_sure().spin_wait_for_ns(1_000_000_000);
     *crate::interrupts::get_user_running_sure() = true;
     unsafe {
-        llvm_asm!("call $0"
-            :: "r"(elf.header.pt2.entry_point())/* , "{rsp}"(stacktop) */, "{rdi}"(boot_info)
-            :: "intel");
+        asm!("call {}", in(reg) elf.header.pt2.entry_point()/* , in(reg) stacktop*/, in("rdi") boot_info);
     }
     *crate::interrupts::get_user_running_sure() = false;
 

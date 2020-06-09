@@ -1,7 +1,9 @@
 #![no_std]
 #![no_main]
-#![feature(llvm_asm, abi_x86_interrupt, alloc_error_handler)]
+#![feature(asm, abi_x86_interrupt, alloc_error_handler)]
 #![feature(type_alias_impl_trait)]
+#![feature(unsafe_block_in_unsafe_fn)]
+#![warn(unsafe_op_in_unsafe_fn)]
 
 use boot::BootInfo;
 use x86_64::VirtAddr;

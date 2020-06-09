@@ -42,6 +42,6 @@ pub trait LocalApic {
         self.set_icr((apic_id as u64) << 56 | int_id as u64);
     }
 
-    /// Start an AP
-    unsafe fn start_ap(&mut self, apic_id: Tid, addr: u32);
+    // Start an AP
+    // unsafe fn start_ap(&mut self, apic_id: Tid, addr: u32);
 }
