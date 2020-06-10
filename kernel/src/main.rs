@@ -67,9 +67,7 @@ pub fn kmain(boot_info: &'static BootInfo) -> ! {
     uefi_clock::initialize(rs);
     info!(
         "uefi clock initialized, now = {}",
-        uefi_clock::get_clock()
-            .expect("UEFI clock not initialized")
-            .now()
+        uefi_clock::get_clock_sure().now()
     );
 
     // 初始化帧分配器

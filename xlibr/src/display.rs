@@ -4,6 +4,10 @@ const COLORS: [u32; 19] = [
     0x00795548, 0x009e9e9e, 0x00607d8b,
 ];
 
+use embedded_graphics::{
+    pixelcolor::Rgb888, prelude::*, primitives::Circle, style::PrimitiveStyle,
+};
+
 pub fn display(
     boot_info: &'static boot::BootInfo,
     base_x: isize,
@@ -14,6 +18,8 @@ pub fn display(
 ) {
     let stride = boot_info.graphic_info.mode.stride() as isize;
     let fb_addr = boot_info.graphic_info.fb_addr;
+
+    let mut display = xklibr::GOPDisplay::new(&boot_info.graphic_info);
 
     for i in base_x..max_x {
         for j in base_y..max_y {
@@ -32,16 +38,14 @@ pub fn display(
     let mut col_incr = 1;
     let mut color = 0;
     for _ in 0..iters {
-        if col >= base_x && col < max_x && row >= base_y && row < max_y {
-            unsafe {
-                *(fb_addr as *mut u32)
-                    .offset(row * stride + col)
-                    .as_mut()
-                    .unwrap() = COLORS[color];
-            }
-        } else {
-            // warn!("invalid position ({}, {})", col, row);
-        }
+        // ignore error because no panic handler is present
+        let _ = Circle::new(Point::new(col as i32, row as i32), 1)
+            .into_styled(PrimitiveStyle::with_fill(Rgb888::new(
+                (COLORS[color] >> 16 & 0xFF) as u8,
+                (COLORS[color] >> 8 & 0xFF) as u8,
+                (COLORS[color] >> 0 & 0xFF) as u8,
+            )))
+            .draw(&mut display);
 
         row += row_incr;
         col += col_incr;

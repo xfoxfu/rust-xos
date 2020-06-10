@@ -106,8 +106,6 @@ impl Console {
         let (x, y) = (self.x_pos, self.y_pos);
         let (cx, cy) = self.get_char_pos(x, y);
         Line::new(
-            // Point::new(x as i32 * FONT_X as i32, y as i32 * FONT_Y as i32),
-            // Point::new(x as i32 * FONT_X as i32, (y + 1) as i32 * FONT_Y as i32 - 1),
             Point::new(cx as i32, cy as i32),
             Point::new(cx as i32, cy as i32 + FONT_Y as i32 - 1),
         )
