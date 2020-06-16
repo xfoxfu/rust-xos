@@ -25,3 +25,4 @@ x86 = "0.33.0"
 x86_64 = "0.11"
 xklibr = { path = "../xklibr" }
 xmas-elf = "0.7"
+hashbrown = "0.7"

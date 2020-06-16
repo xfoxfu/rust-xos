@@ -16,6 +16,7 @@ mod console;
 mod allocator;
 mod apps;
 mod display;
+mod driver_holder;
 mod drivers;
 mod interrupts;
 mod logging;
