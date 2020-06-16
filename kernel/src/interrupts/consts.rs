@@ -27,7 +27,7 @@ pub enum Interrupts {
     SecurityException = 30,
 
     IRQ0 = 32,
-    Syscall32 = 0x80,
+    Syscall = 0x80,
 }
 
 #[repr(u8)]
@@ -40,4 +40,11 @@ pub enum IRQ {
     IDE = 14,
     Error = 19,
     Spurious = 31,
+}
+
+#[repr(u8)]
+pub enum SyscallInt {
+    Exit = 0x00,
+    IO = 0x01,
+    Misc = 0x02,
 }

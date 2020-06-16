@@ -5,6 +5,7 @@ mod apic;
 mod consts;
 mod handlers;
 mod keyboard;
+mod syscall;
 
 pub use keyboard::{get_user_running, get_user_running_sure};
 

@@ -8,6 +8,9 @@ pub fn reg_idt(idt: &mut InterruptDescriptorTable) {
     idt.page_fault.set_handler_fn(page_fault_handler);
     idt[(consts::Interrupts::IRQ0 as u8 + consts::IRQ::Timer as u8) as usize]
         .set_handler_fn(clock_handler);
+    idt[consts::Interrupts::Syscall as usize].set_handler_fn(unsafe {
+        core::mem::transmute(syscall_handler_wrap as *mut extern "C" fn())
+    });
 }
 
 pub extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut InterruptStackFrame) {
@@ -79,4 +82,22 @@ pub extern "x86-interrupt" fn page_fault_handler(
         error_code,
         x86_64::registers::control::Cr2::read()
     );
+}
+
+pub extern "x86-interrupt" fn syscall_handler_wrap(_sf: &mut InterruptStackFrame) {
+    let a0: u64;
+    let a1: u64;
+    let a2: u64;
+    let a3: u64;
+    unsafe {
+        asm!("", out("rax") a0, out("rbx") a1, out("rcx") a2, out("rdx") a3);
+    }
+    syscall_handler(a0, a1, a2, a3);
+}
+
+pub extern "C" fn syscall_handler(a0: u64, a1: u64, a2: u64, a3: u64) {
+    debug!("syscall = {:x} {:x} {:x} {:x}", a0, a1, a2, a3);
+    unsafe {
+        (a1 as *mut u64).write_volatile(1000);
+    }
 }
