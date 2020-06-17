@@ -1,5 +1,3 @@
-#![no_std]
-
 mod gop_display;
 mod uefi_clock;
 

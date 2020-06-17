@@ -24,5 +24,4 @@ rlibc = "1.0"
 spin = "0.5"
 x86 = "0.33.0"
 x86_64 = "0.11"
-xklibr = { path = "../xklibr" }
 xmas-elf = "0.7"

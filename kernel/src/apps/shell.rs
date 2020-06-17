@@ -71,11 +71,9 @@ fn run_program(file: &OsFile, boot_info: &'static BootInfo) {
         *(elf.header.pt2.entry_point() as *mut u64)
     });
     crate::uefi_clock::get_clock_sure().spin_wait_for_ns(1_000_000_000);
-    *crate::interrupts::get_user_running_sure() = true;
     unsafe {
         asm!("call {}", in(reg) elf.header.pt2.entry_point()/* , in(reg) stacktop*/, in("rdi") boot_info);
     }
-    *crate::interrupts::get_user_running_sure() = false;
 
     elf_loader::unmap_elf(&elf, &mut *crate::memory::get_page_table_sure())
         .expect("failed to unload elf");

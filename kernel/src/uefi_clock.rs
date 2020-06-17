@@ -1,5 +1,5 @@
+use crate::utils::UefiClock;
 use boot::RuntimeServices;
-use xklibr::UefiClock;
 
 once_mutex!(pub UEFI_CLOCK: UefiClock);
 

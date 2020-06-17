@@ -9,4 +9,4 @@ edition = "2018"
 [dependencies]
 boot = { path = "../boot", default-features = false }
 embedded-graphics = "0.6"
-xklibr = { path = "../xklibr" }
+pc-keyboard = "0.5"

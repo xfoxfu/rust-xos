@@ -4,10 +4,7 @@ members = [
     "elf-loader",
     "fatpart",
     "kernel",
-    "user0",
-    "user1",
-    "user2",
-    "user3",
-    "xklibr",
+    "draw-plot",
+    "to-upper",
     "xlibr",
 ]

@@ -1,5 +1,5 @@
 [package]
-name = "user1"
+name = "draw-plot"
 version = "0.1.0"
 authors = ["Yuze Fu <i@xfox.me>"]
 edition = "2018"

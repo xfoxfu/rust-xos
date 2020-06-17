@@ -72,6 +72,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "draw-plot"
+version = "0.1.0"
+dependencies = [
+ "boot",
+ "rlibc",
+ "xlibr",
+]
+
+[[package]]
 name = "elf-loader"
 version = "0.1.0"
 dependencies = [
@@ -132,7 +141,6 @@ dependencies = [
  "spin",
  "x86",
  "x86_64",
- "xklibr",
  "xmas-elf",
 ]
 
@@ -332,6 +340,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "to-upper"
+version = "0.1.0"
+dependencies = [
+ "boot",
+ "rlibc",
+ "xlibr",
+]
+
+[[package]]
 name = "ucs2"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -381,42 +398,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "826e7639553986605ec5979c7dd957c7895e93eabed50ab2ffa7f6128a75097c"
 
 [[package]]
-name = "user0"
-version = "0.1.0"
-dependencies = [
- "boot",
- "rlibc",
- "xlibr",
-]
-
-[[package]]
-name = "user1"
-version = "0.1.0"
-dependencies = [
- "boot",
- "rlibc",
- "xlibr",
-]
-
-[[package]]
-name = "user2"
-version = "0.1.0"
-dependencies = [
- "boot",
- "rlibc",
- "xlibr",
-]
-
-[[package]]
-name = "user3"
-version = "0.1.0"
-dependencies = [
- "boot",
- "rlibc",
- "xlibr",
-]
-
-[[package]]
 name = "x86"
 version = "0.33.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -438,22 +419,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "xklibr"
-version = "0.1.0"
-dependencies = [
- "boot",
- "chrono",
- "embedded-graphics",
- "rlibc",
-]
-
-[[package]]
 name = "xlibr"
 version = "0.1.0"
 dependencies = [
  "boot",
  "embedded-graphics",
- "xklibr",
+ "pc-keyboard",
 ]
 
 [[package]]

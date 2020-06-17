@@ -1,5 +1,5 @@
 [package]
-name = "user0"
+name = "to-upper"
 version = "0.1.0"
 authors = ["Yuze Fu <i@xfox.me>"]
 edition = "2018"

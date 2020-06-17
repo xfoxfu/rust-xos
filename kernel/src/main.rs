@@ -23,6 +23,7 @@ mod interrupts;
 mod logging;
 mod memory;
 mod uefi_clock;
+mod utils;
 
 extern crate alloc;
 extern crate rlibc;

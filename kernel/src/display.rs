@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
+use crate::utils::GOPDisplay;
 use boot::GraphicInfo;
-use xklibr::GOPDisplay;
 
 once_mutex!(pub DISPLAY: GOPDisplay<'static>);
 

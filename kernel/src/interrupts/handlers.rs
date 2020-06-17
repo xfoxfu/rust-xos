@@ -93,12 +93,5 @@ pub extern "x86-interrupt" fn syscall_handler_wrap(_sf: &mut InterruptStackFrame
     unsafe {
         asm!("", out("rax") a0, out("rbx") a1, out("rcx") a2, out("rdx") a3);
     }
-    syscall_handler(a0, a1, a2, a3);
-}
-
-pub extern "C" fn syscall_handler(a0: u64, a1: u64, a2: u64, a3: u64) {
-    debug!("syscall = {:x} {:x} {:x} {:x}", a0, a1, a2, a3);
-    unsafe {
-        (a1 as *mut u64).write_volatile(1000);
-    }
+    super::syscall::syscall_handler(a0, a1, a2, a3);
 }
