@@ -1,7 +1,6 @@
 // This is from https://github.com/phil-opp/blog_os/blob/post-09/src/memory.rs
 
 use boot::{MemoryMap, MemoryType};
-use spin::Mutex;
 use x86_64::structures::paging::{FrameAllocator, OffsetPageTable, PageTable, PhysFrame, Size4KiB};
 use x86_64::{PhysAddr, VirtAddr};
 

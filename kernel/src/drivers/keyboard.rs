@@ -1,7 +1,6 @@
 use alloc::collections::VecDeque;
 use alloc::string::String;
 use pc_keyboard::DecodedKey;
-use spin::Mutex;
 
 once_mutex!(KEY_BUFFER: VecDeque<DecodedKey>);
 
@@ -41,7 +40,7 @@ pub fn getline_block() -> String {
             '\n' => break,
             // backspace
             '\x08' => {
-                if s.len() > 0 {
+                if !s.is_empty() {
                     crate::console::get_console_sure().move_cursor(-1, 0);
                     print!("  "); // draw a char more to clear hint
                     crate::console::get_console_sure().move_cursor(-2, 0);

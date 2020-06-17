@@ -1,5 +1,4 @@
 use boot::RuntimeServices;
-use spin::Mutex;
 use xklibr::UefiClock;
 
 once_mutex!(pub UEFI_CLOCK: UefiClock);

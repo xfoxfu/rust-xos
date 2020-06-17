@@ -1,44 +1,26 @@
-use super::MutexIDE;
-use crate::alloc::borrow::ToOwned;
-use crate::drivers::IDE;
-use alloc::string::String;
-use alloc::vec;
+use crate::drivers::{fs, OsDevice, OsFile};
 use alloc::vec::Vec;
 use boot::BootInfo;
-use spin::Mutex;
+use fatpart::{Device, Entry, File};
 use x86_64::structures::paging::FrameAllocator;
 
-fn print_sector(sector: &[u8]) {
-    assert_eq!(sector.len(), 512);
-    for i in 0..32 {
-        for j in 0..4 {
-            for k in 0..4 {
-                print!("{:02x}", sector[i * 16 + j * 4 + k]);
-            }
-            print!(" ");
-        }
-        println!();
-    }
-}
-
-fn list(ide: &mut IDE) -> Vec<String> {
-    let mut buf = vec![0; 512];
-    ide.read_lba(0, 1, &mut buf).expect("failed to read disk");
-
-    buf.resize(buf.iter().position(|v| v == &b'\0').unwrap(), 0);
-
-    let entire = String::from_utf8(buf).expect("executables list is not UTF-8");
-    entire
-        .split('\n')
-        .filter(|v| v.len() > 0)
-        .map(str::to_owned)
+fn list() -> Vec<File<'static, OsDevice>> {
+    fs().root_directory()
+        .load_childs()
+        .unwrap()
+        .into_iter()
+        .filter_map(|e| match e {
+            Entry::Dir(_) => None,
+            Entry::File(f) => Some(f),
+        })
         .collect()
 }
 
-fn run_program(id: u32, boot_info: &'static BootInfo, ide: &mut IDE) {
-    info!("loading file {} to memory", id);
+fn run_program(file: &OsFile, boot_info: &'static BootInfo) {
+    info!("loading file {} to memory", file.entry.stem());
+    let sectors = file.sectors();
     let buf = {
-        let pages = 4;
+        let pages = (sectors.len() + 7) / 8;
         // 分配内存帧
         let mem_start = crate::memory::get_frame_alloc_sure()
             .allocate_frame()
@@ -57,8 +39,8 @@ fn run_program(id: u32, boot_info: &'static BootInfo, ide: &mut IDE) {
         // 加载磁盘内容
         let mut buf =
             unsafe { core::slice::from_raw_parts_mut(mem_start as *mut u8, pages * 0x1000) };
-        ide.read_lba(1 + id * 32, pages as u8 * 8, &mut buf)
-            .unwrap();
+
+        file.load_to(&mut buf);
         &mut buf[..pages * 0x1000]
     };
 
@@ -87,10 +69,16 @@ fn run_program(id: u32, boot_info: &'static BootInfo, ide: &mut IDE) {
         .expect("failed to unload elf");
 }
 
-fn print_help(progs: &Vec<String>) {
+fn print_help(progs: &[OsFile]) {
     println!("Programs:");
     for (v, p) in progs.iter().enumerate() {
-        println!("{} - {}", v, p);
+        println!(
+            "{} - {}.{} {}B",
+            v,
+            p.entry.stem(),
+            p.entry.ext(),
+            p.entry.size
+        );
     }
     println!(
         "Others:
@@ -99,38 +87,35 @@ h - help"
     )
 }
 
-fn main_iter(boot_info: &'static BootInfo, ide: &mut IDE, progs: &Vec<String>) -> bool {
-    use fatpart::*;
+fn main_iter(boot_info: &'static BootInfo, progs: &[OsFile]) -> bool {
+    print!("> ");
+    let prog = crate::drivers::keyboard::getline_block();
 
-    let mutex = Mutex::new(IDE::from_id(0));
-    let ide = MutexIDE(&mutex);
-    ide.0.lock().init().unwrap();
+    for c in prog.chars() {
+        match c {
+            '0'..='9' => {
+                let id = c as u32 - '0' as u32;
+                if (id as usize) < progs.len() {
+                    run_program(&progs[id as usize], boot_info);
+                } else {
+                    println!("unknown process {}", id)
+                }
+            }
+            'h' => print_help(progs),
+            'q' => return false,
+            _ => (),
+        }
+    }
 
-    let mut sector = vec![0; 512];
-
-    // load partition table
-    ide.0.lock().read_lba(0, 1, &mut sector).unwrap();
-    let partition = fatpart::MBRPartitionTable::parse_sector(&sector)
-        .unwrap()
-        .partition0;
-    info!(
-        "parsed partition, begin={}, total={}",
-        partition.begin_lba, partition.total_lba
-    );
-
-    let fat = FATPartition::new(Partition::new(&ide, partition));
-    let mut root = fat.root_directory();
-    info!("childs = {:?}", root.load_childs().unwrap());
-
-    return false;
+    true
 }
 
-pub fn main(boot_info: &'static BootInfo, ide: &mut IDE) -> u8 {
-    let progs = list(ide);
+pub fn main(boot_info: &'static BootInfo) -> u8 {
+    let progs = list();
 
     print_help(&progs);
 
-    while main_iter(boot_info, ide, &progs) {}
+    while main_iter(boot_info, &progs) {}
 
     0
 }

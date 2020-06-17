@@ -14,6 +14,6 @@ pub extern "C" fn __impl_start(boot_info: &'static boot::BootInfo) {
 /// This function is called on panic.
 #[cfg(not(test))]
 #[panic_handler]
-fn panic(info: &core::panic::PanicInfo) -> ! {
+fn panic(_: &core::panic::PanicInfo) -> ! {
     loop {}
 }

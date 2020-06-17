@@ -96,6 +96,7 @@ dependencies = [
  "bit_field 0.10.0",
  "bitflags",
  "byteorder",
+ "log",
 ]
 
 [[package]]

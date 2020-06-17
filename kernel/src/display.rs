@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
 use boot::GraphicInfo;
-use spin::Mutex;
 use xklibr::GOPDisplay;
 
 once_mutex!(pub DISPLAY: GOPDisplay<'static>);

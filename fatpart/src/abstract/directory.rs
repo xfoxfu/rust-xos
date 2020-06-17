@@ -6,8 +6,8 @@ use alloc::{vec, vec::Vec};
 use std::{vec, vec::Vec};
 
 pub struct Directory<'a, T> {
-    device: &'a T,
-    entry: DirEntry,
+    pub device: &'a T,
+    pub entry: DirEntry,
 }
 
 impl<'a, T> Directory<'a, T>
@@ -24,7 +24,7 @@ where
 
         self.device.read_block(sector, 1, &mut buf)?;
         for i in (0..512).step_by(0x20) {
-            let file = crate::DirEntry::parse(&buf[i..]).map_err(|s| BlockError::WithStatus(s))?;
+            let file = crate::DirEntry::parse(&buf[i..]).map_err(BlockError::WithStatus)?;
             if file.is_eod() {
                 break;
             }

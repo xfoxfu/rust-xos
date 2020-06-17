@@ -5,12 +5,12 @@ macro_rules! guard_access_fn {
             $(#[$meta])*
             #[allow(non_snake_case, dead_code)]
             $v fn $fn<'a>() -> Option<spin::MutexGuard<'a, $ty>> {
-                $mutex.r#try().and_then(Mutex::try_lock)
+                $mutex.r#try().and_then(spin::Mutex::try_lock)
             }
             $(#[$meta])*
             #[allow(non_snake_case, dead_code)]
             $v fn [< $fn _sure >]<'a>() -> spin::MutexGuard<'a, $ty> {
-                $mutex.r#try().and_then(Mutex::try_lock).expect(
+                $mutex.r#try().and_then(spin::Mutex::try_lock).expect(
                     stringify!($mutex, " has not been initialized or lockable"))
             }
         }
@@ -19,7 +19,7 @@ macro_rules! guard_access_fn {
 
 macro_rules! once_mutex {
     ($i:vis $v:ident: $t:ty) => {
-        $i static $v: spin::Once<Mutex<$t>> = spin::Once::new();
+        $i static $v: spin::Once<spin::Mutex<$t>> = spin::Once::new();
 
         paste::item! {
             #[allow(non_snake_case)]

@@ -1,5 +1,24 @@
 use x86_64::instructions::port::Port;
 
+once_mutex!(pub DRIVE: IDE);
+pub static DRIVE_WRAP: spin::Once<super::MutexIDE> = spin::Once::new();
+
+/// 初始化键盘输入设备
+///
+/// 需要确保内存已经初始化；在键盘中断初始化完成前，无法获得输入
+pub unsafe fn init() {
+    init_DRIVE(IDE::from_id(0));
+    drive().unwrap().init().unwrap();
+    DRIVE_WRAP.call_once(|| super::MutexIDE(&DRIVE.r#try().unwrap()));
+    debug!("block device initialized");
+}
+
+guard_access_fn!(pub drive(DRIVE: IDE));
+
+pub fn device() -> &'static super::MutexIDE<'static> {
+    DRIVE_WRAP.r#try().unwrap()
+}
+
 pub struct IDE {
     is_slave: bool,
     ports: IDEPorts,
@@ -12,20 +31,20 @@ impl IDE {
 
     pub fn from_id(id: u8) -> Self {
         assert!(/* id >= 0 && */ id <= 3, "id should be in range 0 - 3");
-        Self {
-            is_slave: match id {
+        IDE::new(
+            match id {
                 0 | 2 => false,
                 1 | 3 => true,
                 _ => unreachable!(),
             },
-            ports: match id {
+            match id {
                 // IDE Channel 1
                 0 | 1 => IDEPorts::new(0x1F0, 0x3F4),
                 // IDE Channel 2
                 2 | 3 => IDEPorts::new(0x170, 0x374),
                 _ => unreachable!(),
             },
-        }
+        )
     }
 }
 

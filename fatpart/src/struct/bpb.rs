@@ -108,7 +108,7 @@ impl FAT16BPB {
             sector_per_track,
             tracks,
             hidden_sectors,
-            drive_number: drive_number,
+            drive_number,
             current_head,
             signature,
             id,

@@ -25,7 +25,7 @@ where
             vec![0; fat_meta.bytes_per_sector as usize * fat_meta.sector_per_fat as usize];
         partition
             .read_block(
-                fat_meta.hidden_sectors as usize,
+                fat_meta.perserved_sectors as usize,
                 fat_meta.sector_per_fat as usize,
                 &mut fat_raw,
             )

@@ -9,7 +9,6 @@ use embedded_graphics::{
     style::{PrimitiveStyle, TextStyleBuilder},
 };
 use profont::ProFont12Point;
-use spin::Mutex;
 
 once_mutex!(pub CONSOLE: Console);
 

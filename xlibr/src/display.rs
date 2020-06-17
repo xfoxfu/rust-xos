@@ -16,20 +16,7 @@ pub fn display(
     max_y: isize,
     iters: usize,
 ) {
-    let stride = boot_info.graphic_info.mode.stride() as isize;
-    let fb_addr = boot_info.graphic_info.fb_addr;
-
     let mut display = xklibr::GOPDisplay::new(&boot_info.graphic_info);
-
-    // for i in base_x..max_x {
-    //     for j in base_y..max_y {
-    //         unsafe {
-    //             (fb_addr as *mut u32)
-    //                 .offset(j * stride + i)
-    //                 .write_volatile(0x000F0F0F)
-    //         }
-    //     }
-    // }
 
     let mut row = base_y;
     let mut col = base_x;

@@ -22,7 +22,7 @@ impl<'a> FAT16Table<'a> {
             + self.bpb.fat_count as u16 * self.bpb.sector_per_fat
             + self.bpb.sector_per_cluster as u16 * id;
         let end = start + self.bpb.sector_per_cluster as u16;
-        return start..end;
+        start..end
     }
 
     /// 获取第 id 个 FAT 表项的下一个 FAT 表项

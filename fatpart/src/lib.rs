@@ -8,6 +8,14 @@ extern crate std;
 #[cfg(not(test))]
 extern crate alloc;
 
+#[macro_use]
+extern crate log;
+
+#[cfg(not(test))]
+pub(crate) use alloc::{vec, vec::Vec};
+#[cfg(test)]
+pub(crate) use std::{vec, vec::Vec};
+
 mod r#abstract;
 mod devices;
 mod r#struct;
