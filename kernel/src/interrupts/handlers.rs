@@ -1,5 +1,4 @@
 use super::consts;
-use micromath::F32Ext;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 
 pub fn reg_idt(idt: &mut InterruptDescriptorTable) {
@@ -43,6 +42,8 @@ pub extern "x86-interrupt" fn clock_handler(_stack_frame: &mut InterruptStackFra
         let (cx, cy) = (8 * 79, 16 * 24);
         let len = 16u32;
 
+        #[allow(unused_imports)]
+        use micromath::F32Ext;
         let (dx, dy) = (
             (len as f32 * value.cos()) as i32,
             (len as f32 * value.sin()) as i32,

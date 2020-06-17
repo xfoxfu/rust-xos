@@ -1,7 +1,7 @@
 use crate::drivers::{fs, OsDevice, OsFile};
 use alloc::vec::Vec;
 use boot::BootInfo;
-use fatpart::{Device, Entry, File};
+use fatpart::{Entry, File};
 use x86_64::structures::paging::FrameAllocator;
 
 fn list() -> Vec<File<'static, OsDevice>> {
@@ -40,7 +40,7 @@ fn run_program(file: &OsFile, boot_info: &'static BootInfo) {
         let mut buf =
             unsafe { core::slice::from_raw_parts_mut(mem_start as *mut u8, pages * 0x1000) };
 
-        file.load_to(&mut buf);
+        file.load_to(&mut buf).unwrap();
         &mut buf[..pages * 0x1000]
     };
 
@@ -53,6 +53,18 @@ fn run_program(file: &OsFile, boot_info: &'static BootInfo) {
         &mut *crate::memory::get_frame_alloc_sure(),
     )
     .unwrap();
+    // temporarily disable stack relocation
+    // FIXME: enable stack relocation after GDT set up
+    if false {
+        elf_loader::map_stack(
+            0x0000_2000_0000_0000,
+            512,
+            &mut *crate::memory::get_page_table_sure(),
+            &mut *crate::memory::get_frame_alloc_sure(),
+        )
+        .expect("failed to map stack");
+        let stacktop = 0x0000_2000_0000_0000u64 + 512 * 0x1000;
+    }
 
     debug!("jump to {:x}", elf.header.pt2.entry_point());
     trace!("inst = {:016x}", unsafe {
