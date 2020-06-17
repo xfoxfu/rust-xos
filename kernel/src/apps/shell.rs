@@ -63,7 +63,7 @@ fn run_program(file: &OsFile, boot_info: &'static BootInfo) {
             &mut *crate::memory::get_frame_alloc_sure(),
         )
         .expect("failed to map stack");
-        let stacktop = 0x0000_2000_0000_0000u64 + 512 * 0x1000;
+        let _stacktop = 0x0000_2000_0000_0000u64 + 512 * 0x1000;
     }
 
     debug!("jump to {:x}", elf.header.pt2.entry_point());

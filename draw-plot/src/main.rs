@@ -15,7 +15,7 @@ const COLORS: [u32; 19] = [
 #[export_name = "_start"]
 pub extern "C" fn __impl_start(boot_info: &'static boot::BootInfo) {
     println!("Hello world");
-    let (boot_info, base_x, base_y, max_x, max_y, iters) = (boot_info, 0, 0, 800, 600, 1000);
+    let (base_x, base_y, max_x, max_y) = (0, 0, 800, 600);
     let mut row = base_y as isize;
     let mut col = base_x as isize;
 

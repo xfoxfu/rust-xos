@@ -37,7 +37,9 @@ pub fn read_str(s: &mut Option<pc_keyboard::DecodedKey>) {
 }
 
 pub fn plot_pixel(x: usize, y: usize, color: u32) {
-    crate::display::get_display_sure().set_pixel(x, y, color);
+    crate::display::get_display_sure()
+        .set_pixel(x, y, color)
+        .unwrap();
 }
 
 pub fn sleep(ns: u64) {
