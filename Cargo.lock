@@ -93,12 +93,10 @@ dependencies = [
 name = "fatpart"
 version = "0.1.0"
 dependencies = [
- "hal",
+ "bit_field 0.10.0",
+ "bitflags",
+ "byteorder",
 ]
-
-[[package]]
-name = "hal"
-version = "0.1.0"
 
 [[package]]
 name = "hashbrown"

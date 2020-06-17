@@ -5,8 +5,16 @@
 #[macro_use]
 extern crate std;
 
-mod partition;
+#[cfg(not(test))]
+extern crate alloc;
 
-pub struct FAT12 {}
+mod r#abstract;
+mod devices;
+mod r#struct;
+mod utils;
 
-pub use partition::{MBRPartitionTable, PartitionMeta};
+pub(crate) use utils::*;
+
+pub use devices::*;
+pub use r#abstract::*;
+pub use r#struct::*;

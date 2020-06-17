@@ -55,7 +55,13 @@ impl IDE {
     }
 
     pub fn read_lba(&mut self, sector: u32, count: u8, target: &mut [u8]) -> Result<(), IDEStatus> {
-        assert_eq!((count as usize) * 512, target.len());
+        assert_eq!(
+            (count as usize) * 512,
+            target.len(),
+            "target length {} should equal {}",
+            target.len(),
+            count as usize * 512
+        );
 
         unsafe {
             self.ports

@@ -100,10 +100,10 @@ pub fn kmain(boot_info: &'static BootInfo) -> ! {
         boot_info.system_table.firmware_revision()
     );
 
-    let mut ide = drivers::ide::IDE::from_id(1);
-    ide.init().unwrap();
+    // let mut ide = drivers::ide::IDE::from_id(0);
+    // ide.init().unwrap();
 
-    let exit_code = apps::shell_main(boot_info, &mut ide);
+    let exit_code = apps::shell_main(boot_info, &mut drivers::IDE::from_id(1));
     info!("init process exit = {}, shutdown in 5s", exit_code);
     uefi_clock::get_clock_sure().spin_wait_for_ns(5_000_000_000);
 

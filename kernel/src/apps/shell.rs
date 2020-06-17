@@ -1,10 +1,25 @@
+use super::MutexIDE;
 use crate::alloc::borrow::ToOwned;
 use crate::drivers::IDE;
 use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
 use boot::BootInfo;
+use spin::Mutex;
 use x86_64::structures::paging::FrameAllocator;
+
+fn print_sector(sector: &[u8]) {
+    assert_eq!(sector.len(), 512);
+    for i in 0..32 {
+        for j in 0..4 {
+            for k in 0..4 {
+                print!("{:02x}", sector[i * 16 + j * 4 + k]);
+            }
+            print!(" ");
+        }
+        println!();
+    }
+}
 
 fn list(ide: &mut IDE) -> Vec<String> {
     let mut buf = vec![0; 512];
@@ -85,26 +100,29 @@ h - help"
 }
 
 fn main_iter(boot_info: &'static BootInfo, ide: &mut IDE, progs: &Vec<String>) -> bool {
-    print!("> ");
-    let prog = crate::drivers::keyboard::getline_block();
+    use fatpart::*;
 
-    for c in prog.chars() {
-        match c {
-            '0'..='9' => {
-                let id = c as u32 - '0' as u32;
-                if (id as usize) < progs.len() {
-                    run_program(id, boot_info, ide);
-                } else {
-                    println!("unknown process {}", id)
-                }
-            }
-            'h' => print_help(progs),
-            'q' => return false,
-            _ => (),
-        }
-    }
+    let mutex = Mutex::new(IDE::from_id(0));
+    let ide = MutexIDE(&mutex);
+    ide.0.lock().init().unwrap();
 
-    true
+    let mut sector = vec![0; 512];
+
+    // load partition table
+    ide.0.lock().read_lba(0, 1, &mut sector).unwrap();
+    let partition = fatpart::MBRPartitionTable::parse_sector(&sector)
+        .unwrap()
+        .partition0;
+    info!(
+        "parsed partition, begin={}, total={}",
+        partition.begin_lba, partition.total_lba
+    );
+
+    let fat = FATPartition::new(Partition::new(&ide, partition));
+    let mut root = fat.root_directory();
+    info!("childs = {:?}", root.load_childs().unwrap());
+
+    return false;
 }
 
 pub fn main(boot_info: &'static BootInfo, ide: &mut IDE) -> u8 {

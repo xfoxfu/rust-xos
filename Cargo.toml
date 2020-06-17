@@ -3,7 +3,6 @@ members = [
     "boot",
     "elf-loader",
     "fatpart",
-    "hal",
     "kernel",
     "user0",
     "user1",

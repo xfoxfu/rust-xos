@@ -50,36 +50,35 @@ pub struct PartitionMeta {
 
 impl PartitionMeta {
     pub fn parse(data: &[u8]) -> Result<Self, usize> {
-        // 偏移 长度（字节） 意义
-        // 00H 1 分区状态：00-->非活动分区；0x80-->活动分区；
-        //       其它数值没有意义
-        // 01H 1 分区起始磁头号（HEAD），用到全部8位
-        // 02H 2 分区起始扇区号（SECTOR），占据02H的位0－5；
-        //       该分区的起始磁柱号（CYLINDER），占据
-        //       02H的位6－7和03H的全部8位
-        // 04H 1 文件系统标志位
-        // 05H 1 分区结束磁头号（HEAD），用到全部8位
-        // 06H 2 分区结束扇区号（SECTOR），占据06H的位0－5；
-        //       该分区的结束磁柱号（CYLINDER），占据
-        //       06H的位6－7和07H的全部8位
-        // 08H 4 分区起始相对扇区号
-        // 0CH 4 分区总的扇区数
         if data.len() != 16 {
             return Err(data.len());
         }
 
+        // 00H 1 分区状态：00-->非活动分区；0x80-->活动分区；
+        //       其它数值没有意义
         let is_active = data[0x0] == 0x80;
+        // 01H 1 分区起始磁头号（HEAD），用到全部8位
         let begin_head = data[0x1];
+        // 02H 2 分区起始扇区号（SECTOR），占据02H的位0－5；
+        //       该分区的起始磁柱号（CYLINDER），占据
+        //       02H的位6－7和03H的全部8位
         let begin_sector = data[0x2] & 0x3F;
         let begin_cylinder = ((data[0x2] as u16 & 0xC0) << 2) | data[0x3] as u16;
+        // 04H 1 文件系统标志位
         let fs = data[0x4];
+        // 05H 1 分区结束磁头号（HEAD），用到全部8位
         let end_head = data[0x5];
+        // 06H 2 分区结束扇区号（SECTOR），占据06H的位0－5；
+        //       该分区的结束磁柱号（CYLINDER），占据
+        //       06H的位6－7和07H的全部8位
         let end_sector = data[0x6] & 0x3F;
         let end_cylinder = ((data[0x6] as u16) << 2) | data[0x7] as u16;
+        // 08H 4 分区起始相对扇区号
         let begin_lba = ((data[0xB] as u32) << 24)
             | ((data[0xA] as u32) << 16)
             | ((data[0x9] as u32) << 8)
             | (data[0x8] as u32);
+        // 0CH 4 分区总的扇区数
         let total_lba = ((data[0xF] as u32) << 24)
             | ((data[0xE] as u32) << 16)
             | ((data[0xD] as u32) << 8)
@@ -146,23 +145,11 @@ mod test {
 
     #[test]
     fn mbr_part() {
-        let mut part = [0u8; 64];
-        part[0] = 0x80;
-        part[1] = 0x01;
-        part[2] = 0x01;
-        part[3] = 0x00;
-        part[4] = 0x0B;
-        part[5] = 0xFE;
-        part[6] = 0xBF;
-        part[7] = 0xFC;
-        part[8] = 0x3F;
-        part[9] = 0x00;
-        part[10] = 0x00;
-        part[11] = 0x00;
-        part[12] = 0x7E;
-        part[13] = 0x86;
-        part[14] = 0xBB;
-        part[15] = 0x00;
+        let mut part = vec![
+            0x80, 0x01, 0x01, 0x00, 0x0B, 0xFE, 0xBF, 0xFC, 0x3F, 0x00, 0x00, 0x00, 0x7E, 0x86,
+            0xBB, 0x00,
+        ];
+        part.resize(64, 0);
         let meta0 = MBRPartitionTable::parse(&part).unwrap();
 
         assert_eq!(
