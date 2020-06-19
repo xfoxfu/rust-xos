@@ -4,14 +4,16 @@
 
 extern crate rlibc;
 
-mod display;
-mod syscall;
-
 #[macro_use]
 mod console;
 
+mod display;
+mod input;
+mod syscall;
+
 pub use console::_print;
 pub use display::*;
+pub use input::*;
 pub use pc_keyboard::{DecodedKey, KeyCode};
 pub use syscall::*;
 

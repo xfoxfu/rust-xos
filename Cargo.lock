@@ -294,6 +294,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "sampleio"
+version = "0.1.0"
+dependencies = [
+ "boot",
+ "rlibc",
+ "xlibr",
+]
+
+[[package]]
 name = "scopeguard"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -338,15 +347,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-xid",
-]
-
-[[package]]
-name = "to-upper"
-version = "0.1.0"
-dependencies = [
- "boot",
- "rlibc",
- "xlibr",
 ]
 
 [[package]]

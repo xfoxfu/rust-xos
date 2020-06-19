@@ -1,5 +1,5 @@
 [package]
-name = "to-upper"
+name = "sampleio"
 version = "0.1.0"
 authors = ["Yuze Fu <i@xfox.me>"]
 edition = "2018"

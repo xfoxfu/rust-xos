@@ -1,10 +1,10 @@
 [workspace]
 members = [
     "boot",
+    "draw-plot",
     "elf-loader",
     "fatpart",
     "kernel",
-    "draw-plot",
-    "to-upper",
+    "sampleio",
     "xlibr",
 ]

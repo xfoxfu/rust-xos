@@ -12,13 +12,13 @@ endif
 	target/x86_64-unknown-uefi/$(MODE)/boot.efi   \
 	target/x86_64-unknown-none/$(MODE)/kernel     \
 	target/x86_64-unknown-xos/$(MODE)/draw-plot \
-	target/x86_64-unknown-xos/$(MODE)/to-upper \
+	target/x86_64-unknown-xos/$(MODE)/sampleio \
 
 build: $(ESP)
 
 
 $(ESP): $(ESP)/EFI/BOOT/BOOTX64.EFI $(ESP)/KERNEL.ELF $(ESP)/EFI/BOOT/rboot.conf \
-	$(ESP)/draw-plot $(ESP)/to-upper \
+	$(ESP)/draw-plot $(ESP)/sampleio \
 
 $(ESP)/EFI/BOOT/BOOTX64.EFI: target/x86_64-unknown-uefi/$(MODE)/boot.efi
 	@mkdir -p $(@D)
@@ -32,7 +32,7 @@ $(ESP)/KERNEL.ELF: target/x86_64-unknown-none/$(MODE)/kernel
 $(ESP)/draw-plot: target/x86_64-unknown-xos/$(MODE)/draw-plot
 	@mkdir -p $(@D)
 	cp $< $@
-$(ESP)/to-upper: target/x86_64-unknown-xos/$(MODE)/to-upper
+$(ESP)/sampleio: target/x86_64-unknown-xos/$(MODE)/sampleio
 	@mkdir -p $(@D)
 	cp $< $@
 
@@ -42,7 +42,7 @@ target/x86_64-unknown-none/$(MODE)/kernel: kernel
 	cargo build -p $< --target x86_64-unknown-none.json $(BUILD_ARGS)
 target/x86_64-unknown-xos/$(MODE)/draw-plot: draw-plot
 	cargo build -p $< --target x86_64-unknown-xos.json $(BUILD_ARGS)
-target/x86_64-unknown-xos/$(MODE)/to-upper: to-upper
+target/x86_64-unknown-xos/$(MODE)/sampleio: sampleio
 	cargo build -p $< --target x86_64-unknown-xos.json $(BUILD_ARGS)
 
 qemu: build
