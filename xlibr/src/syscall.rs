@@ -1,5 +1,7 @@
 #[repr(u64)]
 pub enum Syscall {
+    SpawnProcess = 1,
+    ExitProcess = 2,
     PrintStr = 5,
     ReadKey = 6,
     PlotPixel = 7,
@@ -11,6 +13,11 @@ pub fn syscall(id: u64, arg0: u64, arg1: u64, arg2: u64) {
     unsafe {
         asm!("int {id}", id = const 0x80, in("rax") id, in("rbx") arg0, in("rcx") arg1, in("rdx") arg2);
     }
+}
+
+pub fn sys_exit() -> ! {
+    syscall(Syscall::ExitProcess as u64, 0, 0, 0);
+    unsafe { core::intrinsics::unreachable() }
 }
 
 pub fn sys_print_str(s: &str) {

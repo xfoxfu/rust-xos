@@ -1,5 +1,6 @@
 #![no_std]
 #![feature(asm)]
+#![feature(core_intrinsics)]
 
 extern crate rlibc;
 

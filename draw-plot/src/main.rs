@@ -16,7 +16,7 @@ const COLORS: [u32; 19] = [
 ];
 
 #[export_name = "_start"]
-pub extern "C" fn __impl_start(boot_info: &'static boot::BootInfo) {
+pub extern "C" fn __impl_start() -> ! {
     println!("Press ESC to exit program");
     let (base_x, base_y, max_x, max_y) = (0, 0, 800, 600);
     let mut row = base_y as isize;
@@ -62,4 +62,6 @@ pub extern "C" fn __impl_start(boot_info: &'static boot::BootInfo) {
             break;
         }
     }
+
+    xlibr::sys_exit()
 }

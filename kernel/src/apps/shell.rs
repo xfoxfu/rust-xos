@@ -55,7 +55,7 @@ fn run_program(file: &OsFile, boot_info: &'static BootInfo) {
     .unwrap();
     // temporarily disable stack relocation
     // FIXME: enable stack relocation after GDT set up
-    if false {
+    if true {
         elf_loader::map_stack(
             0x0000_2000_0000_0000,
             512,
@@ -72,7 +72,11 @@ fn run_program(file: &OsFile, boot_info: &'static BootInfo) {
     });
     crate::uefi_clock::get_clock_sure().spin_wait_for_ns(1_000_000_000);
     unsafe {
-        asm!("call {}", in(reg) elf.header.pt2.entry_point()/* , in(reg) stacktop*/, in("rdi") boot_info);
+        asm!("int {id}", id = const 0x80,
+            in("rax") crate::interrupts::Syscall::SpawnProcess as u64,
+            in("rbx") elf.header.pt2.entry_point(),
+        );
+        asm!("nop");
     }
 
     elf_loader::unmap_elf(&elf, &mut *crate::memory::get_page_table_sure())

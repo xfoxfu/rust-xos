@@ -7,6 +7,8 @@ mod handlers;
 mod keyboard;
 mod syscall;
 
+pub use syscall::Syscall;
+
 lazy_static! {
     static ref IDT: InterruptDescriptorTable = {
         let mut idt = InterruptDescriptorTable::new();
