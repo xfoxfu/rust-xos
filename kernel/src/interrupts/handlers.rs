@@ -3,17 +3,51 @@ use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, Pag
 
 pub fn reg_idt(idt: &mut InterruptDescriptorTable) {
     idt.breakpoint.set_handler_fn(breakpoint_handler);
-    idt.double_fault.set_handler_fn(double_fault_handler);
+    unsafe {
+        idt.double_fault
+            .set_handler_fn(double_fault_handler)
+            .set_stack_index(crate::gdt::DOUBLE_FAULT_IST_INDEX);
+    }
+    idt.invalid_tss.set_handler_fn(invalid_tss_handler);
+    idt.segment_not_present
+        .set_handler_fn(segment_not_present_handler);
+    idt.stack_segment_fault
+        .set_handler_fn(stack_segment_fault_handler);
     idt.page_fault.set_handler_fn(page_fault_handler);
     idt[(consts::Interrupts::IRQ0 as u8 + consts::IRQ::Timer as u8) as usize]
         .set_handler_fn(clock_handler);
-    idt[consts::Interrupts::Syscall as usize].set_handler_fn(unsafe {
-        core::mem::transmute(syscall_handler_wrap as *mut extern "C" fn())
-    });
+    idt[consts::Interrupts::Syscall as usize].set_handler_fn(syscall_handler_wrap);
 }
 
 pub extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut InterruptStackFrame) {
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
+}
+
+pub extern "x86-interrupt" fn invalid_tss_handler(
+    stack_frame: &mut InterruptStackFrame,
+    error_code: u64,
+) {
+    println!("EXCEPTION: INVALID TSS {}\n{:#?}", error_code, stack_frame);
+}
+
+pub extern "x86-interrupt" fn segment_not_present_handler(
+    stack_frame: &mut InterruptStackFrame,
+    error_code: u64,
+) {
+    println!(
+        "EXCEPTION: SEGMENT NOT PRESENT {}\n{:#?}",
+        error_code, stack_frame
+    );
+}
+
+pub extern "x86-interrupt" fn stack_segment_fault_handler(
+    stack_frame: &mut InterruptStackFrame,
+    error_code: u64,
+) {
+    println!(
+        "EXCEPTION: STACK SEGMENT FAULT {}\n{:#?}",
+        error_code, stack_frame
+    );
 }
 
 pub extern "x86-interrupt" fn clock_handler(_stack_frame: &mut InterruptStackFrame) {

@@ -1,7 +1,7 @@
 use spin::Mutex;
 use x86_64::{structures::idt::InterruptStackFrame, VirtAddr};
 
-static RETURN_IP: Mutex<Option<VirtAddr>> = Mutex::new(None);
+static RETURN_POINT: Mutex<Option<(VirtAddr, VirtAddr, u64)>> = Mutex::new(None);
 
 #[repr(u64)]
 pub enum Syscall {
@@ -25,7 +25,7 @@ pub extern "C" fn syscall_handler(
 
     debug!("syscall = {:x} {:x} {:x} {:x}", a0, a1, a2, a3);
     match a0 {
-        v if v == SpawnProcess as u64 => spawn_process(a1, sf),
+        v if v == SpawnProcess as u64 => spawn_process(a1, a2, sf),
         v if v == ExitProcess as u64 => exit_process(sf),
         v if v == PrintStr as u64 => print_str(unsafe {
             core::str::from_utf8_unchecked(core::slice::from_raw_parts(
@@ -51,21 +51,24 @@ pub extern "C" fn syscall_handler(
     }
 }
 
-pub fn spawn_process(target: u64, s: &mut InterruptStackFrame) {
-    *RETURN_IP.lock() = Some(s.instruction_pointer);
+pub fn spawn_process(target: u64, stack: u64, s: &mut InterruptStackFrame) {
+    *RETURN_POINT.lock() = Some((s.instruction_pointer, s.stack_pointer, s.cpu_flags));
     unsafe {
         s.as_mut().instruction_pointer = VirtAddr::new(target);
+        if stack != 0 {
+            s.as_mut().stack_pointer = VirtAddr::new(stack);
+        }
     }
 }
 
 pub fn exit_process(s: &mut InterruptStackFrame) {
-    if let Some(target) = *RETURN_IP.lock() {
-        unsafe {
-            s.as_mut().instruction_pointer = target;
-        }
-    } else {
-        panic!("process exited without return point");
-    }
+    let sm = unsafe { s.as_mut() };
+    let (ip, sp, flag) = RETURN_POINT
+        .lock()
+        .expect("process exited without return point");
+    sm.instruction_pointer = ip;
+    sm.stack_pointer = sp;
+    sm.cpu_flags = flag;
 }
 
 pub fn print_str(s: &str) {

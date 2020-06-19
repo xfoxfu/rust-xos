@@ -19,6 +19,7 @@ mod apps;
 mod display;
 mod driver_holder;
 mod drivers;
+mod gdt;
 mod interrupts;
 mod logging;
 mod memory;
@@ -45,7 +46,15 @@ macro_rules! _svc {
 
 boot::entry_point!(kmain);
 
+#[allow(unconditional_recursion)]
+fn stack_overflow() {
+    stack_overflow(); // for each recursion, the return address is pushed
+    volatile::Volatile::new(0).read(); // prevent tail recursion optimizations
+}
+
 pub fn kmain(boot_info: &'static BootInfo) -> ! {
+    gdt::init();
+
     // 初始化显示驱动
     display::initialize(&boot_info.graphic_info);
     display::get_display_sure().clear();

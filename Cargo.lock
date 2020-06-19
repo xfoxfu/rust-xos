@@ -139,6 +139,7 @@ dependencies = [
  "profont",
  "rlibc",
  "spin",
+ "volatile",
  "x86",
  "x86_64",
  "xmas-elf",
@@ -396,6 +397,12 @@ name = "unicode-xid"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "826e7639553986605ec5979c7dd957c7895e93eabed50ab2ffa7f6128a75097c"
+
+[[package]]
+name = "volatile"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6af0edf5b4faacc31fc51159244d78d65ec580f021afcef7bd53c04aeabc7f29"
 
 [[package]]
 name = "x86"

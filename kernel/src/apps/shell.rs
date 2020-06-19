@@ -55,7 +55,7 @@ fn run_program(file: &OsFile, boot_info: &'static BootInfo) {
     .unwrap();
     // temporarily disable stack relocation
     // FIXME: enable stack relocation after GDT set up
-    if true {
+    if false {
         elf_loader::map_stack(
             0x0000_2000_0000_0000,
             512,
@@ -70,17 +70,41 @@ fn run_program(file: &OsFile, boot_info: &'static BootInfo) {
     trace!("inst = {:016x}", unsafe {
         *(elf.header.pt2.entry_point() as *mut u64)
     });
-    crate::uefi_clock::get_clock_sure().spin_wait_for_ns(1_000_000_000);
-    unsafe {
-        asm!("int {id}", id = const 0x80,
-            in("rax") crate::interrupts::Syscall::SpawnProcess as u64,
-            in("rbx") elf.header.pt2.entry_point(),
-        );
-        asm!("nop");
-    }
+
+    run_process(elf.header.pt2.entry_point(), 0);
+    info!("process exited");
 
     elf_loader::unmap_elf(&elf, &mut *crate::memory::get_page_table_sure())
         .expect("failed to unload elf");
+}
+
+fn run_process(entry: u64, stacktop: u64) {
+    unsafe {
+        asm!("
+            push rbp
+            int {id}
+            pop rbp",
+            id = const 0x80,
+            in("rax") crate::interrupts::Syscall::SpawnProcess as u64,
+            in("rbx") entry,
+            in("rcx") stacktop,
+            // 将寄存器标记为易失，因为操作系统不会帮助保存寄存器
+            lateout("rax") _,
+            lateout("rbx") _,
+            lateout("rcx") _,
+            lateout("rdx") _,
+            lateout("rsi") _,
+            lateout("rdi") _,
+            lateout("r8") _,
+            lateout("r9") _,
+            lateout("r10") _,
+            lateout("r11") _,
+            lateout("r12") _,
+            lateout("r13") _,
+            lateout("r14") _,
+            lateout("r15") _,
+        );
+    }
 }
 
 fn print_help(progs: &[OsFile]) {
