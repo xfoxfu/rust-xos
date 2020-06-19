@@ -10,3 +10,4 @@ edition = "2018"
 boot = { path = "../boot", default-features = false }
 embedded-graphics = "0.6"
 pc-keyboard = "0.5"
+rlibc = "1.0"

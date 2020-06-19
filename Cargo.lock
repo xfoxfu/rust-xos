@@ -76,7 +76,7 @@ name = "draw-plot"
 version = "0.1.0"
 dependencies = [
  "boot",
- "rlibc",
+ "embedded-graphics",
  "xlibr",
 ]
 
@@ -425,6 +425,7 @@ dependencies = [
  "boot",
  "embedded-graphics",
  "pc-keyboard",
+ "rlibc",
 ]
 
 [[package]]

@@ -1,12 +1,16 @@
 #![no_std]
 #![feature(asm)]
 
+extern crate rlibc;
+
+mod display;
 mod syscall;
 
 #[macro_use]
 mod console;
 
 pub use console::_print;
+pub use display::*;
 pub use pc_keyboard::{DecodedKey, KeyCode};
 pub use syscall::*;
 

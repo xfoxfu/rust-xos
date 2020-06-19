@@ -8,5 +8,5 @@ edition = "2018"
 
 [dependencies]
 boot = { path = "../boot", default-features = false }
+embedded-graphics = "0.6"
 xlibr = { path = "../xlibr", default-features = false }
-rlibc = "1.0.0"

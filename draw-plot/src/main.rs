@@ -2,9 +2,12 @@
 #![no_main]
 #![feature(asm)]
 
-extern crate rlibc;
 #[macro_use]
 extern crate xlibr;
+
+use embedded_graphics::{
+    pixelcolor::Rgb888, prelude::*, primitives::Circle, style::PrimitiveStyle,
+};
 
 const COLORS: [u32; 19] = [
     0x00f44336, 0x00e91e63, 0x009c27b0, 0x00673ab7, 0x003f51b5, 0x002196f3, 0x0003a9f4, 0x0000bcd4,
@@ -14,7 +17,7 @@ const COLORS: [u32; 19] = [
 
 #[export_name = "_start"]
 pub extern "C" fn __impl_start(boot_info: &'static boot::BootInfo) {
-    println!("Hello world");
+    println!("Press ESC to exit program");
     let (base_x, base_y, max_x, max_y) = (0, 0, 800, 600);
     let mut row = base_y as isize;
     let mut col = base_x as isize;
@@ -23,7 +26,15 @@ pub extern "C" fn __impl_start(boot_info: &'static boot::BootInfo) {
     let mut col_incr = 1isize;
     let mut color = 0;
     loop {
-        xlibr::sys_plot_pixel(col as usize, row as usize, COLORS[color]);
+        // ignore error because no panic handler is present
+        let _ = Circle::new(Point::new(col as i32, row as i32), 1)
+            .into_styled(PrimitiveStyle::with_fill(Rgb888::new(
+                (COLORS[color] >> 16 & 0xFF) as u8,
+                (COLORS[color] >> 8 & 0xFF) as u8,
+                (COLORS[color] >> 0 & 0xFF) as u8,
+            )))
+            .draw(&mut xlibr::SysDisplay);
+
         row += row_incr;
         col += col_incr;
 

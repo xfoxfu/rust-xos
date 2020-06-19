@@ -85,7 +85,7 @@ pub extern "x86-interrupt" fn page_fault_handler(
     );
 }
 
-pub extern "x86-interrupt" fn syscall_handler_wrap(_sf: &mut InterruptStackFrame) {
+pub extern "x86-interrupt" fn syscall_handler_wrap(sf: &mut InterruptStackFrame) {
     let a0: u64;
     let a1: u64;
     let a2: u64;
@@ -93,5 +93,5 @@ pub extern "x86-interrupt" fn syscall_handler_wrap(_sf: &mut InterruptStackFrame
     unsafe {
         asm!("", out("rax") a0, out("rbx") a1, out("rcx") a2, out("rdx") a3);
     }
-    super::syscall::syscall_handler(a0, a1, a2, a3);
+    super::syscall::syscall_handler(a0, a1, a2, a3, sf);
 }

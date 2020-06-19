@@ -4,6 +4,7 @@ pub enum Syscall {
     ReadKey = 6,
     PlotPixel = 7,
     Sleep = 8,
+    DisplayResolution = 9,
 }
 
 pub fn syscall(id: u64, arg0: u64, arg1: u64, arg2: u64) {
@@ -30,4 +31,14 @@ pub fn sys_plot_pixel(x: usize, y: usize, color: u32) {
 }
 pub fn sys_sleep(ns: u64) {
     syscall(Syscall::Sleep as u64, ns, 0, 0);
+}
+pub fn sys_display_resolution() -> (u64, u64) {
+    let (mut x, mut y) = (0, 0);
+    syscall(
+        Syscall::DisplayResolution as u64,
+        (&mut x) as *mut _ as u64,
+        (&mut y) as *mut _ as u64,
+        0,
+    );
+    (x, y)
 }
