@@ -101,6 +101,12 @@ pub fn kmain(boot_info: &'static BootInfo) -> ! {
         drivers::keyboard::init();
     }
 
+    // 初始化进程管理
+    process::init();
+
+    // 开中断
+    x86_64::instructions::interrupts::enable();
+
     // 内核加载完成
     info!(
         "kernel loaded, firmware vendor={} version={:?}",

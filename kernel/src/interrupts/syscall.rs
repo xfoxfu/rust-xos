@@ -70,19 +70,14 @@ pub fn spawn_process(target: u64, stack: u64, s: &mut InterruptStackFrame, regs:
 
 pub fn exit_process(s: &mut InterruptStackFrame, regs: &mut Registers) {
     let sm = unsafe { s.as_mut() };
-    let (ip, sp, flag, reg_backup) = RETURN_POINT
-        .lock()
+    let rtp_lock = RETURN_POINT.lock();
+    let (ip, sp, flag, reg_backup) = rtp_lock
+        .as_ref()
         .expect("process exited without return point");
-    sm.instruction_pointer = ip;
-    sm.stack_pointer = sp;
-    sm.cpu_flags = flag;
-    unsafe {
-        rlibc::memcpy(
-            regs as *mut _ as *mut u8,
-            &reg_backup as *const _ as *const u8,
-            core::mem::size_of::<Registers>(),
-        );
-    }
+    sm.instruction_pointer = *ip;
+    sm.stack_pointer = *sp;
+    sm.cpu_flags = *flag;
+    *regs = reg_backup.clone();
 }
 
 pub fn print_str(s: &str) {

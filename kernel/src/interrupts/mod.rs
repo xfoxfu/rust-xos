@@ -19,7 +19,7 @@ lazy_static! {
     };
 }
 
-/// 初始化中断及硬件系统
+/// 初始化中断及硬件系统；不会打开中断
 pub unsafe fn init() {
     IDT.load();
     keyboard::init();
@@ -27,8 +27,6 @@ pub unsafe fn init() {
     // info!("x2apic support = {}", apic::X2Apic::support());
     let mut xapic = unsafe { XApic::new(crate::memory::physical_to_virtual(0xfee00000)) };
     xapic.cpu_init();
-
-    x86_64::instructions::interrupts::enable();
 }
 
 #[inline(always)]

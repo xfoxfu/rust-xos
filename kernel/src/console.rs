@@ -1,13 +1,11 @@
 use crate::display::get_display_sure;
 use core::fmt::Arguments;
 use core::fmt::Write;
-use embedded_graphics::{
-    fonts::Text,
-    pixelcolor::Rgb888,
-    prelude::*,
-    primitives::Line,
-    style::{PrimitiveStyle, TextStyleBuilder},
-};
+use embedded_graphics::fonts::Text;
+use embedded_graphics::pixelcolor::Rgb888;
+use embedded_graphics::prelude::*;
+use embedded_graphics::primitives::Line;
+use embedded_graphics::style::{PrimitiveStyle, TextStyleBuilder};
 use profont::ProFont12Point;
 
 once_mutex!(pub CONSOLE: Console);

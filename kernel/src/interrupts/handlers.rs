@@ -15,7 +15,7 @@ pub fn reg_idt(idt: &mut InterruptDescriptorTable) {
         .set_handler_fn(stack_segment_fault_handler);
     idt.page_fault.set_handler_fn(page_fault_handler);
     idt[(consts::Interrupts::IRQ0 as u8 + consts::IRQ::Timer as u8) as usize]
-        .set_handler_fn(clock_handler);
+        .set_handler_fn(unsafe { core::mem::transmute(clock_handler_wrapper as *mut fn()) });
     idt[consts::Interrupts::Syscall as usize].set_handler_fn(unsafe {
         core::mem::transmute(syscall_handler_naked_wrapper as *mut fn())
     });
@@ -52,10 +52,124 @@ pub extern "x86-interrupt" fn stack_segment_fault_handler(
     );
 }
 
-pub extern "x86-interrupt" fn clock_handler(_stack_frame: &mut InterruptStackFrame) {
+pub extern "x86-interrupt" fn double_fault_handler(
+    stack_frame: &mut InterruptStackFrame,
+    error_code: u64,
+) -> ! {
+    panic!(
+        "EXCEPTION: DOUBLE FAULT\n{:#?}, {}",
+        stack_frame, error_code
+    );
+}
+
+pub extern "x86-interrupt" fn page_fault_handler(
+    stack_frame: &mut InterruptStackFrame,
+    error_code: PageFaultErrorCode,
+) {
+    panic!(
+        "EXCEPTION: PAGE FAULT\n{:#?}, {:?} addr={:?}",
+        stack_frame,
+        error_code,
+        x86_64::registers::control::Cr2::read()
+    );
+}
+
+#[repr(align(8), C)]
+#[derive(Debug, Clone, Default)]
+pub struct Registers {
+    r15: usize,
+    r14: usize,
+    r13: usize,
+    r12: usize,
+    r11: usize,
+    r10: usize,
+    r9: usize,
+    r8: usize,
+    rdi: usize,
+    rsi: usize,
+    rdx: usize,
+    rcx: usize,
+    rbx: usize,
+    rax: usize,
+    rbp: usize,
+}
+
+macro_rules! wrap {
+    ($fn: ident => $w:ident) => {
+        #[naked]
+        pub unsafe extern "C" fn $w() {
+            unsafe {
+                asm!(
+                    "
+                push rbp
+                push rax
+                push rbx
+                push rcx
+                push rdx
+                push rsi
+                push rdi
+                push r8
+                push r9
+                push r10
+                push r11
+                push r12
+                push r13
+                push r14
+                push r15
+                mov rsi, rsp  // 第二个参数：寄存器列表
+                mov rdi, rsp
+                add rdi, 15*8 // 第一个参数：中断帧
+                call {}
+                pop r15 
+                pop r14 
+                pop r13 
+                pop r12 
+                pop r11 
+                pop r10 
+                pop r9  
+                pop r8  
+                pop rdi 
+                pop rsi 
+                pop rdx 
+                pop rcx 
+                pop rbx 
+                pop rax 
+                pop rbp 
+                iretq
+                ",
+                sym $fn
+                );
+                core::intrinsics::unreachable()
+            }
+        }
+    };
+}
+
+wrap!(syscall_handler_naked => syscall_handler_naked_wrapper);
+
+pub extern "C" fn syscall_handler_naked(sf: &mut InterruptStackFrame, regs: &mut Registers) {
+    super::syscall::syscall_handler(
+        regs.rax as u64,
+        regs.rbx as u64,
+        regs.rcx as u64,
+        regs.rdx as u64,
+        sf,
+        regs,
+    );
+}
+
+wrap!(clock_handler => clock_handler_wrapper);
+
+pub extern "C" fn clock_handler(sf: &mut InterruptStackFrame, regs: &mut Registers) {
+    crate::process::switch_first_ready_process(sf, regs);
+    clock_draw();
+    super::ack(consts::Interrupts::IRQ0 as u8);
+}
+
+fn clock_draw() {
     static ANGLE: spin::Mutex<u16> = spin::Mutex::new(90);
     const ANGLE_INCR: u16 = 15;
-    super::ack(consts::Interrupts::IRQ0 as u8);
+
     x86_64::instructions::interrupts::without_interrupts(|| {
         use embedded_graphics::drawable::*;
         use embedded_graphics::pixelcolor::*;
@@ -97,104 +211,4 @@ pub extern "x86-interrupt" fn clock_handler(_stack_frame: &mut InterruptStackFra
                 .unwrap(); // FIXME: report error later
         }
     })
-}
-
-pub extern "x86-interrupt" fn double_fault_handler(
-    stack_frame: &mut InterruptStackFrame,
-    error_code: u64,
-) -> ! {
-    panic!(
-        "EXCEPTION: DOUBLE FAULT\n{:#?}, {}",
-        stack_frame, error_code
-    );
-}
-
-pub extern "x86-interrupt" fn page_fault_handler(
-    stack_frame: &mut InterruptStackFrame,
-    error_code: PageFaultErrorCode,
-) {
-    panic!(
-        "EXCEPTION: PAGE FAULT\n{:#?}, {:?} addr={:?}",
-        stack_frame,
-        error_code,
-        x86_64::registers::control::Cr2::read()
-    );
-}
-
-#[repr(packed, C)]
-#[derive(Debug, Copy, Clone)]
-pub struct Registers {
-    r15: usize,
-    r14: usize,
-    r13: usize,
-    r12: usize,
-    r11: usize,
-    r10: usize,
-    r9: usize,
-    r8: usize,
-    rdi: usize,
-    rsi: usize,
-    rdx: usize,
-    rcx: usize,
-    rbx: usize,
-    rax: usize,
-    rbp: usize,
-}
-
-#[naked]
-pub unsafe extern "C" fn syscall_handler_naked_wrapper() {
-    unsafe {
-        asm!(
-            "
-        push rbp
-        push rax
-        push rbx
-        push rcx
-        push rdx
-        push rsi
-        push rdi
-        push r8
-        push r9
-        push r10
-        push r11
-        push r12
-        push r13
-        push r14
-        push r15
-        mov rsi, rsp  // 第二个参数：寄存器列表
-        mov rdi, rsp
-        add rdi, 15*8 // 第一个参数：中断帧
-        call syscall_handler_naked
-        pop r15 
-        pop r14 
-        pop r13 
-        pop r12 
-        pop r11 
-        pop r10 
-        pop r9  
-        pop r8  
-        pop rdi 
-        pop rsi 
-        pop rdx 
-        pop rcx 
-        pop rbx 
-        pop rax 
-        pop rbp 
-        iretq
-        ",
-        );
-        core::intrinsics::unreachable()
-    }
-}
-
-#[no_mangle] // 导出函数名供上面汇编调用
-pub extern "C" fn syscall_handler_naked(sf: &mut InterruptStackFrame, regs: &mut Registers) {
-    super::syscall::syscall_handler(
-        regs.rax as u64,
-        regs.rbx as u64,
-        regs.rcx as u64,
-        regs.rdx as u64,
-        sf,
-        regs,
-    );
 }
