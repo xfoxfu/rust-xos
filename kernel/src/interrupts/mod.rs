@@ -7,6 +7,7 @@ mod handlers;
 mod keyboard;
 mod syscall;
 
+pub use handlers::Registers;
 pub use syscall::Syscall;
 
 lazy_static! {

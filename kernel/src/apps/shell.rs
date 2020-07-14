@@ -88,21 +88,6 @@ fn run_process(entry: u64, stacktop: u64) {
             in("rax") crate::interrupts::Syscall::SpawnProcess as u64,
             in("rbx") entry,
             in("rcx") stacktop,
-            // 将寄存器标记为易失，因为操作系统不会帮助保存寄存器
-            lateout("rax") _,
-            lateout("rbx") _,
-            lateout("rcx") _,
-            lateout("rdx") _,
-            lateout("rsi") _,
-            lateout("rdi") _,
-            lateout("r8") _,
-            lateout("r9") _,
-            lateout("r10") _,
-            lateout("r11") _,
-            lateout("r12") _,
-            lateout("r13") _,
-            lateout("r14") _,
-            lateout("r15") _,
         );
     }
 }

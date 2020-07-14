@@ -1,9 +1,12 @@
 #![no_std]
 #![no_main]
-#![feature(asm, abi_x86_interrupt, alloc_error_handler)]
-#![feature(type_alias_impl_trait)]
 #![feature(unsafe_block_in_unsafe_fn)]
+#![feature(type_alias_impl_trait)]
 #![feature(naked_functions)]
+#![feature(core_intrinsics)]
+#![feature(asm)]
+#![feature(alloc_error_handler)]
+#![feature(abi_x86_interrupt)]
 #![warn(unsafe_op_in_unsafe_fn)]
 
 use boot::BootInfo;
@@ -23,6 +26,7 @@ mod gdt;
 mod interrupts;
 mod logging;
 mod memory;
+mod process;
 mod uefi_clock;
 mod utils;
 
@@ -45,12 +49,6 @@ macro_rules! _svc {
 }
 
 boot::entry_point!(kmain);
-
-#[allow(unconditional_recursion)]
-fn stack_overflow() {
-    stack_overflow(); // for each recursion, the return address is pushed
-    volatile::Volatile::new(0).read(); // prevent tail recursion optimizations
-}
 
 pub fn kmain(boot_info: &'static BootInfo) -> ! {
     gdt::init();

@@ -1,4 +1,3 @@
-use alloc::collections::VecDeque;
 use alloc::string::String;
 use crossbeam_queue::ArrayQueue;
 use pc_keyboard::DecodedKey;

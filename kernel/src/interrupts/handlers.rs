@@ -16,7 +16,9 @@ pub fn reg_idt(idt: &mut InterruptDescriptorTable) {
     idt.page_fault.set_handler_fn(page_fault_handler);
     idt[(consts::Interrupts::IRQ0 as u8 + consts::IRQ::Timer as u8) as usize]
         .set_handler_fn(clock_handler);
-    idt[consts::Interrupts::Syscall as usize].set_handler_fn(syscall_handler_wrap);
+    idt[consts::Interrupts::Syscall as usize].set_handler_fn(unsafe {
+        core::mem::transmute(syscall_handler_naked_wrapper as *mut fn())
+    });
 }
 
 pub extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut InterruptStackFrame) {
@@ -34,8 +36,8 @@ pub extern "x86-interrupt" fn segment_not_present_handler(
     stack_frame: &mut InterruptStackFrame,
     error_code: u64,
 ) {
-    println!(
-        "EXCEPTION: SEGMENT NOT PRESENT {}\n{:#?}",
+    error!(
+        "EXCEPTION: SEGMENT NOT PRESENT {:#x}\n{:#?}",
         error_code, stack_frame
     );
 }
@@ -119,13 +121,80 @@ pub extern "x86-interrupt" fn page_fault_handler(
     );
 }
 
-pub extern "x86-interrupt" fn syscall_handler_wrap(sf: &mut InterruptStackFrame) {
-    let a0: u64;
-    let a1: u64;
-    let a2: u64;
-    let a3: u64;
+#[repr(packed, C)]
+#[derive(Debug, Copy, Clone)]
+pub struct Registers {
+    r15: usize,
+    r14: usize,
+    r13: usize,
+    r12: usize,
+    r11: usize,
+    r10: usize,
+    r9: usize,
+    r8: usize,
+    rdi: usize,
+    rsi: usize,
+    rdx: usize,
+    rcx: usize,
+    rbx: usize,
+    rax: usize,
+    rbp: usize,
+}
+
+#[naked]
+pub unsafe extern "C" fn syscall_handler_naked_wrapper() {
     unsafe {
-        asm!("", out("rax") a0, out("rbx") a1, out("rcx") a2, out("rdx") a3);
+        asm!(
+            "
+        push rbp
+        push rax
+        push rbx
+        push rcx
+        push rdx
+        push rsi
+        push rdi
+        push r8
+        push r9
+        push r10
+        push r11
+        push r12
+        push r13
+        push r14
+        push r15
+        mov rsi, rsp  // 第二个参数：寄存器列表
+        mov rdi, rsp
+        add rdi, 15*8 // 第一个参数：中断帧
+        call syscall_handler_naked
+        pop r15 
+        pop r14 
+        pop r13 
+        pop r12 
+        pop r11 
+        pop r10 
+        pop r9  
+        pop r8  
+        pop rdi 
+        pop rsi 
+        pop rdx 
+        pop rcx 
+        pop rbx 
+        pop rax 
+        pop rbp 
+        iretq
+        ",
+        );
+        core::intrinsics::unreachable()
     }
-    super::syscall::syscall_handler(a0, a1, a2, a3, sf);
+}
+
+#[no_mangle] // 导出函数名供上面汇编调用
+pub extern "C" fn syscall_handler_naked(sf: &mut InterruptStackFrame, regs: &mut Registers) {
+    super::syscall::syscall_handler(
+        regs.rax as u64,
+        regs.rbx as u64,
+        regs.rcx as u64,
+        regs.rdx as u64,
+        sf,
+        regs,
+    );
 }
