@@ -93,15 +93,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "draw-plot"
-version = "0.1.0"
-dependencies = [
- "boot",
- "embedded-graphics",
- "xlibr",
-]
-
-[[package]]
 name = "elf-loader"
 version = "0.1.0"
 dependencies = [
@@ -261,6 +252,24 @@ name = "pc-keyboard"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c48392db76c4e9a69e0b3be356c5f97ebb7b14413c5e4fd0af4755dbf86e2fce"
+
+[[package]]
+name = "plota"
+version = "0.1.0"
+dependencies = [
+ "boot",
+ "embedded-graphics",
+ "xlibr",
+]
+
+[[package]]
+name = "plotb"
+version = "0.1.0"
+dependencies = [
+ "boot",
+ "embedded-graphics",
+ "xlibr",
+]
 
 [[package]]
 name = "proc-macro-hack"
