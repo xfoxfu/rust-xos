@@ -47,8 +47,8 @@ pub extern "x86-interrupt" fn interrupt_handler(_stack_frame: &mut InterruptStac
     super::ack(super::consts::IRQ::Keyboard as u8);
     if let Some(key) = receive() {
         trace!("key readed {:?}", key);
-        if let Some(mut buf) = crate::drivers::keyboard::buffer() {
-            buf.push_back(key);
+        if let Some(buf) = crate::drivers::keyboard::KEY_BUFFER.r#try() {
+            buf.push(key).unwrap();
         } else {
             trace!(
                 "keyboard input ignored because of uninitialized keyboard driver {:?}",

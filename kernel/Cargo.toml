@@ -9,6 +9,7 @@ bit_field = "0.10"
 bitflags = "1.2"
 boot = { path = "../boot", default-features = false }
 chrono = { version = "0.4", default-features = false }
+crossbeam-queue = { version = "0.2.1", default-features = false, features = ["alloc"] }
 elf-loader = { path = "../elf-loader" }
 embedded-graphics = "0.6"
 fatpart = { path = "../fatpart" }

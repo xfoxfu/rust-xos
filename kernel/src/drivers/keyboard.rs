@@ -1,24 +1,28 @@
 use alloc::collections::VecDeque;
 use alloc::string::String;
+use crossbeam_queue::ArrayQueue;
 use pc_keyboard::DecodedKey;
+use spin::Once;
 
-once_mutex!(KEY_BUFFER: VecDeque<DecodedKey>);
+pub static KEY_BUFFER: Once<ArrayQueue<DecodedKey>> = Once::new();
 
 const DEFAULT_CAPACITY: usize = 80;
+
+pub fn buffer<'a>() -> &'a ArrayQueue<DecodedKey> {
+    &KEY_BUFFER.r#try().unwrap()
+}
 
 /// 初始化键盘输入设备
 ///
 /// 需要确保内存已经初始化；在键盘中断初始化完成前，无法获得输入
 pub unsafe fn init() {
-    init_KEY_BUFFER(VecDeque::with_capacity(DEFAULT_CAPACITY));
+    KEY_BUFFER.call_once(|| ArrayQueue::new(DEFAULT_CAPACITY));
     debug!("keybaord buffer initialized");
 }
 
-guard_access_fn!(pub buffer(KEY_BUFFER: VecDeque<DecodedKey>));
-
 /// 读取按键，非阻塞
 pub fn get_key() -> Option<DecodedKey> {
-    x86_64::instructions::interrupts::without_interrupts(|| buffer()?.pop_front())
+    x86_64::instructions::interrupts::without_interrupts(|| buffer().pop().ok())
 }
 
 /// 读取按键，阻塞直到存在按键
