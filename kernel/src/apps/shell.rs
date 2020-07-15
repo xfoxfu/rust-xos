@@ -126,7 +126,9 @@ fn print_help(progs: &[OsFile]) {
         );
     }
     println!(
-        "Others:
+        "Run processes by id, ids grouped together will be runned concurrently
+While groups separated by space will run sequentially
+Others:
 q - quit
 h - help"
     )
@@ -136,9 +138,9 @@ fn main_iter(boot_info: &'static BootInfo, progs: &[OsFile]) -> bool {
     print!("> ");
     let prog = crate::drivers::keyboard::getline_block();
 
-    let cflags = run_program_prepare();
-
     for part in prog.split(' ') {
+        run_program_prepare();
+        println!("run processes [{}]", part);
         for c in part.chars() {
             match c {
                 '0'..='9' => {
@@ -154,9 +156,8 @@ fn main_iter(boot_info: &'static BootInfo, progs: &[OsFile]) -> bool {
                 _ => (),
             }
         }
+        run_program_launch();
     }
-
-    run_program_launch();
 
     true
 }

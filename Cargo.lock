@@ -272,6 +272,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "plotc"
+version = "0.1.0"
+dependencies = [
+ "boot",
+ "embedded-graphics",
+ "xlibr",
+]
+
+[[package]]
 name = "proc-macro-hack"
 version = "0.5.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"

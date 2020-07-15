@@ -202,8 +202,15 @@ fn find_next_process(list: &mut Vec<Process>, prev: usize) -> Option<&mut Proces
         Some(list.first_mut().unwrap())
     } else {
         // 否则，切换到第一个可用的用户程序
-        list.iter_mut()
-            .skip(1)
-            .find(|p| p.state == ProcessState::Ready && p.id != prev)
+        let next_pos = list.iter().position(|p| p.id == prev).unwrap() + 1;
+        if next_pos >= list.len() {
+            if prev != 1 {
+                Some(&mut list[1])
+            } else {
+                None
+            }
+        } else {
+            Some(&mut list[next_pos])
+        }
     }
 }
