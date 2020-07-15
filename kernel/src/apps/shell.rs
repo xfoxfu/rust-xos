@@ -138,19 +138,21 @@ fn main_iter(boot_info: &'static BootInfo, progs: &[OsFile]) -> bool {
 
     let cflags = run_program_prepare();
 
-    for c in prog.chars() {
-        match c {
-            '0'..='9' => {
-                let id = c as u32 - '0' as u32;
-                if (id as usize) < progs.len() {
-                    run_program(&progs[id as usize], boot_info);
-                } else {
-                    println!("unknown process {}", id)
+    for part in prog.split(' ') {
+        for c in part.chars() {
+            match c {
+                '0'..='9' => {
+                    let id = c as u32 - '0' as u32;
+                    if (id as usize) < progs.len() {
+                        run_program(&progs[id as usize], boot_info);
+                    } else {
+                        println!("unknown process {}", id)
+                    }
                 }
+                'h' => print_help(progs),
+                'q' => return false,
+                _ => (),
             }
-            'h' => print_help(progs),
-            'q' => return false,
-            _ => (),
         }
     }
 

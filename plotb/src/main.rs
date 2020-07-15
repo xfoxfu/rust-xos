@@ -20,7 +20,6 @@ const COLORS: [u32; 19] = [
 
 #[export_name = "_start"]
 pub extern "C" fn __impl_start() -> ! {
-    println!("Press ESC to exit program");
     let (base_x, base_y, max_x, max_y) = (400, 0, 800, 600);
     Rectangle::new(
         Point::new(base_x as i32, base_y as i32),
@@ -28,6 +27,10 @@ pub extern "C" fn __impl_start() -> ! {
     )
     .into_styled(PrimitiveStyle::with_fill(Rgb888::BLACK))
     .draw(&mut xlibr::SysDisplay);
+    println!(
+        "Drawing on ({}, {}) -> ({}, {})",
+        base_x, base_y, max_x, max_y
+    );
     let mut row = base_y as isize;
     let mut col = base_x as isize;
 
