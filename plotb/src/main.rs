@@ -6,7 +6,10 @@
 extern crate xlibr;
 
 use embedded_graphics::{
-    pixelcolor::Rgb888, prelude::*, primitives::Circle, style::PrimitiveStyle,
+    pixelcolor::Rgb888,
+    prelude::*,
+    primitives::{Circle, Rectangle},
+    style::PrimitiveStyle,
 };
 
 const COLORS: [u32; 19] = [
@@ -19,13 +22,19 @@ const COLORS: [u32; 19] = [
 pub extern "C" fn __impl_start() -> ! {
     println!("Press ESC to exit program");
     let (base_x, base_y, max_x, max_y) = (400, 0, 800, 600);
+    Rectangle::new(
+        Point::new(base_x as i32, base_y as i32),
+        Point::new(max_x as i32, max_y as i32),
+    )
+    .into_styled(PrimitiveStyle::with_fill(Rgb888::BLACK))
+    .draw(&mut xlibr::SysDisplay);
     let mut row = base_y as isize;
     let mut col = base_x as isize;
 
     let mut row_incr = 1isize;
-    let mut col_incr = 2isize;
+    let mut col_incr = 1isize;
     let mut color = 0;
-    loop {
+    for _ in 0..1000 {
         // ignore error because no panic handler is present
         let _ = Circle::new(Point::new(col as i32, row as i32), 1)
             .into_styled(PrimitiveStyle::with_fill(Rgb888::new(
@@ -56,10 +65,6 @@ pub extern "C" fn __impl_start() -> ! {
         // wait for a little while
         for _ in 0..5_000_00 {
             unsafe { asm!("nop") }
-        }
-
-        if let Some(xlibr::DecodedKey::Unicode('\x1b')) = xlibr::sys_read_key() {
-            break;
         }
     }
 

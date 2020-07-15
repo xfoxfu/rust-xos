@@ -11,7 +11,7 @@ macro_rules! guard_access_fn {
             #[allow(non_snake_case, dead_code)]
             $v fn [< $fn _sure >]<'a>() -> spin::MutexGuard<'a, $ty> {
                 $mutex.r#try().and_then(spin::Mutex::try_lock).expect(
-                    stringify!($mutex, " has not been initialized or lockable"))
+                    stringify!($mutex has not been initialized or lockable))
             }
         }
     };

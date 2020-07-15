@@ -54,30 +54,33 @@ pub extern "C" fn syscall_handler(
 }
 
 pub fn spawn_process(target: u64, stack: u64, s: &mut InterruptStackFrame, regs: &mut Registers) {
-    *RETURN_POINT.lock() = Some((
-        s.instruction_pointer,
-        s.stack_pointer,
-        s.cpu_flags,
-        regs.clone(),
-    ));
-    unsafe {
-        s.as_mut().instruction_pointer = VirtAddr::new(target);
-        if stack != 0 {
-            s.as_mut().stack_pointer = VirtAddr::new(stack);
-        }
-    }
+    // x86_64::instructions::interrupts::without_interrupts(|| {
+    crate::process::save_current_process(s, regs);
+    crate::process::get_process_list_sure()
+        .first_mut()
+        .unwrap()
+        .pause();
+    // crate::process::kill_current_process();
+    crate::process::switch_first_ready_process(s, regs);
+    // info!("switched back {:#x?} {:x?}", s, regs);
+    // })
 }
 
 pub fn exit_process(s: &mut InterruptStackFrame, regs: &mut Registers) {
-    let sm = unsafe { s.as_mut() };
-    let rtp_lock = RETURN_POINT.lock();
-    let (ip, sp, flag, reg_backup) = rtp_lock
-        .as_ref()
-        .expect("process exited without return point");
-    sm.instruction_pointer = *ip;
-    sm.stack_pointer = *sp;
-    sm.cpu_flags = *flag;
-    *regs = reg_backup.clone();
+    // x86_64::instructions::interrupts::without_interrupts(|| {
+    crate::process::kill_current_process();
+    crate::process::switch_first_ready_process(s, regs);
+    // info!("switched back {:#x?} {:x?}", s, regs);
+    // })
+    // let sm = unsafe { s.as_mut() };
+    // let rtp_lock = RETURN_POINT.lock();
+    // let (ip, sp, flag, reg_backup) = rtp_lock
+    //     .as_ref()
+    //     .expect("process exited without return point");
+    // sm.instruction_pointer = *ip;
+    // sm.stack_pointer = *sp;
+    // sm.cpu_flags = *flag;
+    // *regs = reg_backup.clone();
 }
 
 pub fn print_str(s: &str) {

@@ -3,6 +3,8 @@ use crate::{
     memory::{physical_to_virtual, BootInfoFrameAllocator},
 };
 use alloc::vec::Vec;
+use x86_64::registers::control::{Cr3, Cr3Flags};
+use x86_64::registers::rflags::RFlags;
 use x86_64::structures::idt::{InterruptStackFrame, InterruptStackFrameValue};
 use x86_64::structures::paging::{FrameAllocator, OffsetPageTable, PageTable, PhysFrame, Size4KiB};
 use x86_64::{PhysAddr, VirtAddr};
@@ -13,7 +15,8 @@ pub struct Process {
     state: ProcessState,
     state_isf: InterruptStackFrameValue,
     state_reg: Registers,
-    page_table_addr: PhysAddr,
+    /// 页表所处地址
+    page_table_addr: (PhysFrame, Cr3Flags),
     /// 若非内核进程，则具备独立页表及其控制，否则没有
     page_table: Option<OffsetPageTable<'static>>, // 实际生命周期和 Process 一致
 }
@@ -30,23 +33,20 @@ impl Process {
         let new_frame = frame_alloc
             .allocate_frame()
             .expect("cannot alloc page table for new process");
-        let page_table_addr = new_frame.start_address();
+        let page_table_addr = new_frame;
         // 1.1. 复制当前页表
         unsafe {
             rlibc::memcpy(
-                physical_to_virtual(page_table_addr.as_u64() as usize) as *mut u8,
-                physical_to_virtual(
-                    x86_64::registers::control::Cr3::read()
-                        .0
-                        .start_address()
-                        .as_u64() as usize,
-                ) as *const u8,
+                physical_to_virtual(page_table_addr.start_address().as_u64() as usize) as *mut u8,
+                physical_to_virtual(Cr3::read().0.start_address().as_u64() as usize) as *const u8,
                 core::mem::size_of::<PageTable>(),
             );
         }
         // 1.2. 构建页表对象
         let page_table_raw = unsafe {
-            (physical_to_virtual(page_table_addr.as_u64() as usize) as *mut PageTable).as_mut()
+            (physical_to_virtual(page_table_addr.start_address().as_u64() as usize)
+                as *mut PageTable)
+                .as_mut()
         }
         .unwrap();
         let page_table = unsafe {
@@ -71,9 +71,27 @@ impl Process {
             state,
             state_isf,
             state_reg,
-            page_table_addr,
+            page_table_addr: (page_table_addr, Cr3::read().1),
             page_table: Some(page_table),
         }
+    }
+}
+
+impl Process {
+    pub fn id(&self) -> usize {
+        self.id
+    }
+    pub fn state_isf_mut(&mut self) -> &mut InterruptStackFrameValue {
+        &mut self.state_isf
+    }
+    pub fn page_table_mut(&mut self) -> &mut OffsetPageTable<'static> {
+        self.page_table.as_mut().unwrap()
+    }
+    pub fn pause(&mut self) {
+        self.state = ProcessState::Ready;
+    }
+    pub fn resume(&mut self) {
+        self.state = ProcessState::Running;
     }
 }
 
@@ -97,76 +115,95 @@ pub fn init() {
     let mut kproc = Process::new(&mut *alloc, list.len());
     kproc.state = ProcessState::Running;
     // 对于内核，其页表只是伪作，实际上还是要使用 `memory` 模块的页表
-    // unsafe {
-    //     let (_, cr3f) = x86_64::registers::control::Cr3::read();
-    //     x86_64::registers::control::Cr3::write(
-    //         PhysFrame::from_start_address_unchecked(kproc.page_table_addr),
-    //         cr3f,
-    //     );
-    // }
+    kproc.page_table_addr = Cr3::read();
     list.push(kproc);
+    info!("process manager initialized");
 }
 
 /// 创建进程，不会自动切换过去
-pub fn spawn_process() {
+pub fn spawn_process(entry: VirtAddr, stacktop: VirtAddr) {
     let mut list = get_process_list_sure();
-    let mut proc = Process::new(&mut *crate::memory::get_frame_alloc_sure(), list.len());
-    proc.state = ProcessState::Running;
+    let mut proc = Process::new(
+        &mut *crate::memory::get_frame_alloc_sure(),
+        list.last().unwrap().id + 1,
+    );
+    proc.state = ProcessState::Ready;
+    proc.state_isf_mut().instruction_pointer = entry;
+    proc.state_isf_mut().stack_pointer = stacktop;
+    // 参考自 rCore 设置进程初始 flags
+    proc.state_isf.cpu_flags =
+        (RFlags::IOPL_HIGH | RFlags::IOPL_LOW | RFlags::INTERRUPT_FLAG).bits();
     list.push(proc);
 }
 
 /// 结束进程，执行前确保已经切换到有效进程上下文中
-pub fn kill_process(id: usize) {
-    let mut list = get_process_list_sure();
-    if id >= list.len() {
-        panic!("kill invalid process");
-    }
-    list.remove(id);
+pub fn kill_current_process() {
+    get_process_list_sure().retain(|p| p.state != ProcessState::Running);
 }
 
 /// 将给定的中断栈帧和寄存器切换到第一个就绪进程
 pub fn switch_first_ready_process(sf: &mut InterruptStackFrame, regs: &mut Registers) {
-    let mut list = get_process_list_sure();
     // 1. 暂停当前正在运行的进程，并保存其状态
-    let running_proc = list
+    let prev_id = save_current_process(sf, regs);
+    // info!("paused {:?}", prev_id);
+    // 2. 寻找可以运行的进程
+    let mut list = get_process_list_sure();
+    if let Some(proc) = find_next_process(&mut *list, prev_id.unwrap_or(0)) {
+        proc.state = ProcessState::Running;
+        // 2b. 若非当前进程，则需要进行切换
+        if prev_id == None || proc.id != prev_id.unwrap() {
+            unsafe {
+                let sf_mut = sf.as_mut();
+                sf_mut.instruction_pointer = proc.state_isf.instruction_pointer;
+                sf_mut.stack_pointer = proc.state_isf.stack_pointer;
+                sf_mut.cpu_flags = proc.state_isf.cpu_flags;
+                *regs = proc.state_reg.clone();
+                // 更新 Cr3 后会自动刷新 TLB
+                Cr3::write(proc.page_table_addr.0, proc.page_table_addr.1);
+            };
+        }
+        trace!(
+            "switched to process {} {:?} {:?} {:?}",
+            proc.id,
+            sf,
+            regs,
+            Cr3::read()
+        );
+    } else {
+        // 2c. 是当前进程则只需要修改状态记录，不需要切换
+        list.iter_mut()
+            .find(|p| p.id == prev_id.unwrap())
+            .unwrap()
+            .state = ProcessState::Running;
+    }
+}
+
+pub fn save_current_process(sf: &mut InterruptStackFrame, regs: &mut Registers) -> Option<usize> {
+    let mut list = get_process_list_sure();
+    // a. 若存在正在运行的进程，则保存状态
+    if let Some(running_proc) = list
         .iter_mut()
         .filter(|p| p.state == ProcessState::Running)
         .next()
-        .unwrap();
-    running_proc.state = ProcessState::Ready;
-    running_proc.state_isf = sf.clone();
-    running_proc.state_reg = regs.clone();
-    let previous_proc_id = running_proc.id;
-    trace!("paused process {}", previous_proc_id);
-    // 2. 寻找可以运行的进程
-    // 2.a. 若存在可以运行的进程，则执行进程
-    if let Some(proc) = list
-        .iter_mut()
-        .filter(|p| p.state == ProcessState::Ready && p.id != previous_proc_id)
-        .next()
     {
-        proc.state = ProcessState::Running;
-        unsafe {
-            *sf.as_mut() = proc.state_isf.clone();
-            *regs = proc.state_reg.clone();
-        }
-        trace!("switched to process {}", proc.id);
-    } else if list.len() > 1 {
-        list[previous_proc_id].state = ProcessState::Running;
-        trace!("restore process {}", previous_proc_id);
+        running_proc.state = ProcessState::Ready;
+        running_proc.state_isf = sf.clone();
+        running_proc.state_reg = regs.clone();
+        Some(running_proc.id)
     } else {
-        // 2.b. 若不存在，则切换到内核运行
-        let kproc = list.first_mut().unwrap();
-        kproc.state = ProcessState::Running;
-        if kproc.id == previous_proc_id {
-            // 当内核就是当前运行进程时，就不需要恢复上下文了
-            trace!("reset kernel to running");
-        } else {
-            unsafe {
-                *sf.as_mut() = kproc.state_isf.clone();
-                *regs = kproc.state_reg.clone();
-            }
-            trace!("switched to kernel {}", 0);
-        }
+        // b. 否则不保存状态
+        None
+    }
+}
+
+fn find_next_process(list: &mut Vec<Process>, prev: usize) -> Option<&mut Process> {
+    if list.first().unwrap().state == ProcessState::Running || list.len() <= 1 {
+        // 若内核正在运行，或没有用户程序，则应当切换到内核
+        Some(list.first_mut().unwrap())
+    } else {
+        // 否则，切换到第一个可用的用户程序
+        list.iter_mut()
+            .skip(1)
+            .find(|p| p.state == ProcessState::Ready && p.id != prev)
     }
 }

@@ -43,7 +43,7 @@ impl LocalApic for XApic {
             // TICR would be calibrated using an external time source.
             self.write(TDCR, X1);
             self.write(TIMER, PERIODIC | (T_IRQ0 + IRQ_TIMER));
-            self.write(TICR, 100000000);
+            self.write(TICR, 10000000);
 
             // Disable logical interrupt lines.
             self.write(LINT0, MASKED);

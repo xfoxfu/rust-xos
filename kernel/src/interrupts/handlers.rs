@@ -14,11 +14,16 @@ pub fn reg_idt(idt: &mut InterruptDescriptorTable) {
     idt.stack_segment_fault
         .set_handler_fn(stack_segment_fault_handler);
     idt.page_fault.set_handler_fn(page_fault_handler);
-    idt[(consts::Interrupts::IRQ0 as u8 + consts::IRQ::Timer as u8) as usize]
-        .set_handler_fn(unsafe { core::mem::transmute(clock_handler_wrapper as *mut fn()) });
-    idt[consts::Interrupts::Syscall as usize].set_handler_fn(unsafe {
-        core::mem::transmute(syscall_handler_naked_wrapper as *mut fn())
-    });
+    unsafe {
+        idt[(consts::Interrupts::IRQ0 as u8 + consts::IRQ::Timer as u8) as usize]
+            .set_handler_fn(unsafe { core::mem::transmute(clock_handler_wrapper as *mut fn()) })
+            .set_stack_index(crate::gdt::CONTEXT_SWITCH);
+        idt[consts::Interrupts::Syscall as usize]
+            .set_handler_fn(unsafe {
+                core::mem::transmute(syscall_handler_naked_wrapper as *mut fn())
+            })
+            .set_stack_index(crate::gdt::CONTEXT_SWITCH);
+    }
 }
 
 pub extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut InterruptStackFrame) {
@@ -36,10 +41,20 @@ pub extern "x86-interrupt" fn segment_not_present_handler(
     stack_frame: &mut InterruptStackFrame,
     error_code: u64,
 ) {
+    info!(
+        "Segments = cs{:#x} ds{:#x} es{:#x} fs{:#x} gs{:#x} ss{:#x}",
+        x86::segmentation::cs(),
+        x86::segmentation::ds(),
+        x86::segmentation::es(),
+        x86::segmentation::fs(),
+        x86::segmentation::gs(),
+        x86::segmentation::ss(),
+    );
     error!(
         "EXCEPTION: SEGMENT NOT PRESENT {:#x}\n{:#?}",
         error_code, stack_frame
     );
+    panic!()
 }
 
 pub extern "x86-interrupt" fn stack_segment_fault_handler(
