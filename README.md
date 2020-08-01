@@ -7,8 +7,17 @@
 - 需要 Rustup
 
 ```sh
-$ make run
+$ rustup component add rust-src
+$ make qemu
 ```
+
+若不想安装 Rust，可以这样执行：
+
+```sh
+qemu-system-x86_64 -bios OVMF.fd -drive format=raw,file=fat:rw:esp -net none
+```
+
+压缩包里已经带有编译好的内容了。
 
 ## 子模块
 
