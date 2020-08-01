@@ -27,6 +27,21 @@ where
         sectors
     }
 
+    pub fn cluster_sectors(&self) -> Vec<(u16, Vec<u16>)> {
+        let mut ret = vec![];
+
+        let mut cluster = Some(self.entry.first_cluster as u16);
+        while let Some(cluster_id) = cluster {
+            ret.push((
+                cluster_id,
+                self.device.fat_table().cluster_sector(cluster_id).collect(),
+            ));
+            cluster = self.device.fat_table().next_cluster(cluster_id);
+        }
+
+        ret
+    }
+
     pub fn load_to(&self, dst: &mut [u8]) -> Result<(), BlockError> {
         let mut offset = 0;
         let mut cluster = Some(self.entry.first_cluster as u16);

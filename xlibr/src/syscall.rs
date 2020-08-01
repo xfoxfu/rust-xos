@@ -77,4 +77,11 @@ pub fn sys_deallocate(ptr: *mut u8, layout: &core::alloc::Layout) {
     );
 }
 
-pub fn sys_read_disk(id: u64, dst: *mut u8) {}
+pub fn sys_read_disk(id: u64, dst: &mut [u8]) {
+    syscall(
+        Syscall::ReadDisk as u64,
+        id,
+        dst.as_mut_ptr() as u64,
+        dst.len() as u64,
+    )
+}

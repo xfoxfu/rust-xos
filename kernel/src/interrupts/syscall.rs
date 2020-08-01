@@ -1,5 +1,6 @@
 use super::handlers::Registers;
 use core::alloc::Layout;
+use fatpart::Device;
 use spin::Mutex;
 use x86_64::{structures::idt::InterruptStackFrame, VirtAddr};
 
@@ -61,6 +62,9 @@ pub extern "C" fn syscall_handler(
         v if v == Deallocate as u64 => deallocate(unsafe { a1 as *mut u8 }, unsafe {
             (a2 as *const Layout).as_ref().unwrap()
         }),
+        v if v == ReadDisk as u64 => read_disk(a1, unsafe {
+            core::slice::from_raw_parts_mut(a2 as *mut u8, a3 as usize)
+        }),
         _ => (),
     }
 }
@@ -107,7 +111,7 @@ pub fn allocate(layout: &core::alloc::Layout, ptr: &mut *mut u8) {
         .allocate_first_fit(layout.clone())
         .unwrap()
         .as_ptr();
-    info!("allocated {:x} => {:x}", ptr as *mut _ as u64, *ptr as u64);
+    debug!("allocated {:x} => {:x}", ptr as *mut _ as u64, *ptr as u64);
 }
 
 pub fn deallocate(ptr: *mut u8, layout: &core::alloc::Layout) {
@@ -116,7 +120,13 @@ pub fn deallocate(ptr: *mut u8, layout: &core::alloc::Layout) {
             .lock()
             .deallocate(core::ptr::NonNull::new_unchecked(ptr), layout.clone());
     }
-    info!("deallocated {:x}", ptr as u64);
+    debug!("deallocated {:x}", ptr as u64);
 }
 
-pub fn read_disk(id: u64, dst: *mut u8) {}
+pub fn read_disk(id: u64, dst: &mut [u8]) {
+    use crate::drivers::device;
+
+    device()
+        .read_block(id as usize, dst.len() / device().block_size().unwrap(), dst)
+        .unwrap()
+}
