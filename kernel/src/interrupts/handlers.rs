@@ -177,7 +177,7 @@ wrap!(clock_handler => clock_handler_wrapper);
 
 pub extern "C" fn clock_handler(sf: &mut InterruptStackFrame, regs: &mut Registers) {
     crate::process::switch_first_ready_process(sf, regs);
-    clock_draw();
+    // clock_draw();
     super::ack(consts::Interrupts::IRQ0 as u8);
 }
 

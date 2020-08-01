@@ -12,6 +12,10 @@ where
     pub fn new(inner: &'a T, meta: PartitionMeta) -> Self {
         Self { inner, meta }
     }
+
+    pub fn meta(&self) -> &PartitionMeta {
+        &self.meta
+    }
 }
 
 impl<'a, T> Device for Partition<'a, T>

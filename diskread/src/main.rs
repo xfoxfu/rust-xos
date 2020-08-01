@@ -7,7 +7,7 @@ extern crate rlibc;
 #[macro_use]
 extern crate xlibr;
 
-use fatpart::{Device, Entry, FATPartition};
+use fatpart::{Device, Entry, FATPartition, FatDevice};
 use sys_device::SysDevice;
 
 mod sys_device;
@@ -41,7 +41,9 @@ pub extern "C" fn __impl_start() -> ! {
     println!("                             GET FILE CLUSTER INFO                              ");
 
     let [p0, _, _, _] = fatpart::Disk::new(&dev).partitions();
+    println!("part info = {:?}", p0.meta());
     let part = FATPartition::new(p0);
+    println!("part meta = {:?}", part.fat_meta());
 
     let mut root = part.root_directory();
     let files = root.load_childs().unwrap();
