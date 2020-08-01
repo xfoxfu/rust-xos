@@ -15,12 +15,13 @@ endif
 	target/x86_64-unknown-xos/$(MODE)/plota \
 	target/x86_64-unknown-xos/$(MODE)/plotb \
 	target/x86_64-unknown-xos/$(MODE)/plotc \
+	target/x86_64-unknown-xos/$(MODE)/diskread \
 
 build: $(ESP)
 
 
 $(ESP): $(ESP)/EFI/BOOT/BOOTX64.EFI $(ESP)/KERNEL.ELF $(ESP)/EFI/BOOT/rboot.conf \
-	$(ESP)/sampleio $(ESP)/plota $(ESP)/plotb $(ESP)/plotc \
+	$(ESP)/sampleio $(ESP)/plota $(ESP)/plotb $(ESP)/plotc $(ESP)/diskread \
 
 $(ESP)/EFI/BOOT/BOOTX64.EFI: target/x86_64-unknown-uefi/$(MODE)/boot.efi
 	@mkdir -p $(@D)
@@ -43,6 +44,9 @@ $(ESP)/plotb: target/x86_64-unknown-xos/$(MODE)/plotb
 $(ESP)/plotc: target/x86_64-unknown-xos/$(MODE)/plotc
 	@mkdir -p $(@D)
 	cp $< $@
+$(ESP)/diskread: target/x86_64-unknown-xos/$(MODE)/diskread
+	@mkdir -p $(@D)
+	cp $< $@
 
 target/x86_64-unknown-uefi/$(MODE)/boot.efi: boot
 	cargo build -p $< --target x86_64-unknown-uefi $(BUILD_ARGS)
@@ -55,6 +59,8 @@ target/x86_64-unknown-xos/$(MODE)/plota: plota
 target/x86_64-unknown-xos/$(MODE)/plotb: plotb
 	cargo build -p $< --target x86_64-unknown-xos.json $(BUILD_ARGS)
 target/x86_64-unknown-xos/$(MODE)/plotc: plotc
+	cargo build -p $< --target x86_64-unknown-xos.json $(BUILD_ARGS)
+target/x86_64-unknown-xos/$(MODE)/diskread: diskread
 	cargo build -p $< --target x86_64-unknown-xos.json $(BUILD_ARGS)
 
 qemu: build

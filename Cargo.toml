@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "boot",
+    "diskread",
     "elf-loader",
     "fatpart",
     "kernel",

@@ -93,6 +93,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "diskread"
+version = "0.1.0"
+dependencies = [
+ "fatpart",
+ "rlibc",
+ "xlibr",
+]
+
+[[package]]
 name = "elf-loader"
 version = "0.1.0"
 dependencies = [

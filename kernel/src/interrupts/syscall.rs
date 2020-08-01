@@ -1,4 +1,5 @@
 use super::handlers::Registers;
+use core::alloc::Layout;
 use spin::Mutex;
 use x86_64::{structures::idt::InterruptStackFrame, VirtAddr};
 
@@ -13,6 +14,9 @@ pub enum Syscall {
     PlotPixel = 7,
     Sleep = 8,
     DisplayResolution = 9,
+    Allocate = 10,
+    Deallocate = 11,
+    ReadDisk = 12,
 }
 
 pub extern "C" fn syscall_handler(
@@ -49,6 +53,14 @@ pub extern "C" fn syscall_handler(
                 (a2 as *mut u64).as_mut().unwrap()
             })
         }
+        v if v == Allocate as u64 => {
+            allocate(unsafe { (a1 as *const Layout).as_ref().unwrap() }, unsafe {
+                (a2 as *mut *mut u8).as_mut().unwrap()
+            })
+        }
+        v if v == Deallocate as u64 => deallocate(unsafe { a1 as *mut u8 }, unsafe {
+            (a2 as *const Layout).as_ref().unwrap()
+        }),
         _ => (),
     }
 }
@@ -88,3 +100,23 @@ pub fn display_resolution(px: &mut u64, py: &mut u64) {
     *px = x as u64;
     *py = y as u64;
 }
+
+pub fn allocate(layout: &core::alloc::Layout, ptr: &mut *mut u8) {
+    *ptr = crate::allocator::ALLOCATOR
+        .lock()
+        .allocate_first_fit(layout.clone())
+        .unwrap()
+        .as_ptr();
+    info!("allocated {:x} => {:x}", ptr as *mut _ as u64, *ptr as u64);
+}
+
+pub fn deallocate(ptr: *mut u8, layout: &core::alloc::Layout) {
+    unsafe {
+        crate::allocator::ALLOCATOR
+            .lock()
+            .deallocate(core::ptr::NonNull::new_unchecked(ptr), layout.clone());
+    }
+    info!("deallocated {:x}", ptr as u64);
+}
+
+pub fn read_disk(id: u64, dst: *mut u8) {}

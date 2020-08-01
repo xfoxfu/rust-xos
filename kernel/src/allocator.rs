@@ -8,7 +8,7 @@ pub const HEAP_START: usize = 0xFFFF_FF80_0000_0000;
 pub const HEAP_SIZE: usize = 1000 * 1024; // 100 KiB
 
 #[global_allocator]
-static ALLOCATOR: LockedHeap = LockedHeap::empty();
+pub static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 pub fn init_heap(
     mapper: &mut impl Mapper<Size4KiB>,

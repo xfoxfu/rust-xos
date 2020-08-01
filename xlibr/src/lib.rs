@@ -1,13 +1,17 @@
 #![no_std]
 #![feature(asm)]
 #![feature(core_intrinsics)]
+#![feature(alloc_error_handler)]
 
+extern crate alloc;
 extern crate rlibc;
 
 #[macro_use]
 mod console;
 
+mod allocator;
 mod display;
+mod ide_device;
 mod input;
 mod syscall;
 
