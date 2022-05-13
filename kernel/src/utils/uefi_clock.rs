@@ -16,7 +16,7 @@ impl UefiClock {
     }
 
     pub fn now(&self) -> NaiveDateTime {
-        let uefi_time = self.rt().get_time().unwrap().unwrap();
+        let uefi_time = self.rt().get_time().unwrap();
         NaiveDate::from_ymd(
             uefi_time.year() as i32,
             uefi_time.month() as u32,

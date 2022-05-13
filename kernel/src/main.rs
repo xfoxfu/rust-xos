@@ -1,13 +1,22 @@
 #![no_std]
 #![no_main]
-#![feature(unsafe_block_in_unsafe_fn)]
 #![feature(type_alias_impl_trait)]
 #![feature(naked_functions)]
 #![feature(core_intrinsics)]
-#![feature(asm)]
 #![feature(alloc_error_handler)]
 #![feature(abi_x86_interrupt)]
+#![feature(asm_sym)]
+#![feature(asm_const)]
+#![feature(core_ffi_c)]
+// #![feature(rustc_private)]
 #![warn(unsafe_op_in_unsafe_fn)]
+
+// extern crate compiler_builtins;
+
+#[no_mangle]
+pub extern "C" fn fmodf(x: f32, y: f32) -> f32 {
+    libm::fmodf(x, y)
+}
 
 use boot::BootInfo;
 use x86_64::VirtAddr;
@@ -24,6 +33,7 @@ mod driver_holder;
 mod drivers;
 mod gdt;
 mod interrupts;
+// mod libm;
 mod logging;
 mod memory;
 mod process;

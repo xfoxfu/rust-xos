@@ -8,6 +8,6 @@ edition = "2018"
 
 [dependencies]
 boot = { path = "../boot", default-features = false }
-embedded-graphics = "0.6"
+embedded-graphics = "0.7.1"
 pc-keyboard = "0.5"
 rlibc = "1.0"

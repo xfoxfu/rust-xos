@@ -26,19 +26,19 @@ pub fn reg_idt(idt: &mut InterruptDescriptorTable) {
     }
 }
 
-pub extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut InterruptStackFrame) {
+pub extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
 }
 
 pub extern "x86-interrupt" fn invalid_tss_handler(
-    stack_frame: &mut InterruptStackFrame,
+    stack_frame: InterruptStackFrame,
     error_code: u64,
 ) {
     println!("EXCEPTION: INVALID TSS {}\n{:#?}", error_code, stack_frame);
 }
 
 pub extern "x86-interrupt" fn segment_not_present_handler(
-    stack_frame: &mut InterruptStackFrame,
+    stack_frame: InterruptStackFrame,
     error_code: u64,
 ) {
     info!(
@@ -58,7 +58,7 @@ pub extern "x86-interrupt" fn segment_not_present_handler(
 }
 
 pub extern "x86-interrupt" fn stack_segment_fault_handler(
-    stack_frame: &mut InterruptStackFrame,
+    stack_frame: InterruptStackFrame,
     error_code: u64,
 ) {
     println!(
@@ -68,7 +68,7 @@ pub extern "x86-interrupt" fn stack_segment_fault_handler(
 }
 
 pub extern "x86-interrupt" fn double_fault_handler(
-    stack_frame: &mut InterruptStackFrame,
+    stack_frame: InterruptStackFrame,
     error_code: u64,
 ) -> ! {
     panic!(
@@ -78,7 +78,7 @@ pub extern "x86-interrupt" fn double_fault_handler(
 }
 
 pub extern "x86-interrupt" fn page_fault_handler(
-    stack_frame: &mut InterruptStackFrame,
+    stack_frame: InterruptStackFrame,
     error_code: PageFaultErrorCode,
 ) {
     panic!(
@@ -112,9 +112,9 @@ pub struct Registers {
 macro_rules! wrap {
     ($fn: ident => $w:ident) => {
         #[naked]
-        pub unsafe extern "C" fn $w() {
+        pub unsafe extern "C" fn $w() -> ! {
             unsafe {
-                asm!(
+                core::arch::asm!(
                     "
                 push rbp
                 push rax
@@ -152,9 +152,9 @@ macro_rules! wrap {
                 pop rbp 
                 iretq
                 ",
-                sym $fn
+                sym $fn,
+                options(noreturn)
                 );
-                core::intrinsics::unreachable()
             }
         }
     };
@@ -165,8 +165,8 @@ wrap!(syscall_handler_naked => syscall_handler_naked_wrapper);
 pub extern "C" fn syscall_handler_naked(sf: &mut InterruptStackFrame, regs: &mut Registers) {
     super::syscall::syscall_handler(
         regs.rax as u64,
-        regs.rbx as u64,
-        regs.rcx as u64,
+        regs.rdi as u64,
+        regs.rsi as u64,
         regs.rdx as u64,
         sf,
         regs,
@@ -186,11 +186,9 @@ fn clock_draw() {
     const ANGLE_INCR: u16 = 15;
 
     x86_64::instructions::interrupts::without_interrupts(|| {
-        use embedded_graphics::drawable::*;
         use embedded_graphics::pixelcolor::*;
         use embedded_graphics::prelude::*;
         use embedded_graphics::primitives::*;
-        use embedded_graphics::style::*;
 
         let value;
         // 自增

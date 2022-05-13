@@ -1,8 +1,8 @@
 MODE ?= release
 OVMF := OVMF.fd
 ESP := esp
-BUILD_ARGS := -Z build-std=core,alloc
-QEMU_ARGS := -net none
+BUILD_ARGS := -Z build-std=core,alloc,compiler_builtins -Zbuild-std-features=compiler-builtins-mem
+QEMU_ARGS ?= 
 
 ifeq (${MODE}, release)
 	BUILD_ARGS += --release
@@ -66,6 +66,7 @@ target/x86_64-unknown-xos/$(MODE)/diskread: diskread
 qemu: build
 	qemu-system-x86_64 -bios ${OVMF} \
 	-drive format=raw,file=fat:rw:$(ESP) \
+	-net none \
 	$(QEMU_ARGS)
 
 test:

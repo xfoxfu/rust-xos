@@ -8,8 +8,8 @@ extern crate xlibr;
 use embedded_graphics::{
     pixelcolor::Rgb888,
     prelude::*,
+    primitives::PrimitiveStyle,
     primitives::{Circle, Rectangle},
-    style::PrimitiveStyle,
 };
 
 const COLORS: [u32; 19] = [
@@ -23,7 +23,7 @@ pub extern "C" fn __impl_start() -> ! {
     let (base_x, base_y, max_x, max_y) = (0, 0, 800, 300);
     Rectangle::new(
         Point::new(base_x as i32, base_y as i32),
-        Point::new(max_x as i32, max_y as i32),
+        Size::new((max_x - base_x) as u32, (max_y - base_y) as u32),
     )
     .into_styled(PrimitiveStyle::with_fill(Rgb888::BLACK))
     .draw(&mut xlibr::SysDisplay);
@@ -67,7 +67,7 @@ pub extern "C" fn __impl_start() -> ! {
 
         // wait for a little while
         for _ in 0..5_000_00 {
-            unsafe { asm!("nop") }
+            unsafe { core::arch::asm!("nop") }
         }
     }
 

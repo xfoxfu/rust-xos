@@ -9,21 +9,25 @@ bit_field = "0.10"
 bitflags = "1.2"
 boot = { path = "../boot", default-features = false }
 chrono = { version = "0.4", default-features = false }
-crossbeam-queue = { version = "0.2.1", default-features = false, features = ["alloc"] }
+crossbeam-queue = { version = "0.3.5", default-features = false, features = [
+    "alloc",
+] }
 elf-loader = { path = "../elf-loader" }
-embedded-graphics = "0.6"
+embedded-graphics = "0.7.1"
 fatpart = { path = "../fatpart" }
-hashbrown = "0.7"
+hashbrown = "0.12.1"
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
-linked_list_allocator = "0.8"
+linked_list_allocator = "0.9.1"
 log = "0.4"
-micromath = "1.0"
-paste = "0.1"
+micromath = "2.0.0"
+paste = "1.0.7"
 pc-keyboard = "0.5"
-profont = "0.4"
+profont = "0.6.1"
 rlibc = "1.0"
-spin = "0.5"
-volatile = "0.2.6"
-x86 = "0.33.0"
-x86_64 = "0.11"
-xmas-elf = "0.7"
+spin = "0.9.3"
+volatile = "0.4.5"
+x86 = "0.47.0"
+x86_64 = "0.14.9"
+xmas-elf = "0.8.0"
+libm = "*"
+# compiler_builtins = { git = "https://github.com/rust-lang/compiler-builtins" }

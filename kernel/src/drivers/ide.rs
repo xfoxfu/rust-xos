@@ -9,14 +9,14 @@ pub static DRIVE_WRAP: spin::Once<super::MutexIDE> = spin::Once::new();
 pub unsafe fn init() {
     init_DRIVE(IDE::from_id(0));
     drive().unwrap().init().unwrap();
-    DRIVE_WRAP.call_once(|| super::MutexIDE(&DRIVE.r#try().unwrap()));
+    DRIVE_WRAP.call_once(|| super::MutexIDE(&DRIVE.get().unwrap()));
     debug!("block device initialized");
 }
 
 guard_access_fn!(pub drive(DRIVE: IDE));
 
 pub fn device() -> &'static super::MutexIDE<'static> {
-    DRIVE_WRAP.r#try().unwrap()
+    DRIVE_WRAP.get().unwrap()
 }
 
 pub struct IDE {
@@ -112,7 +112,7 @@ impl IDE {
 
                 // Transfer 256 16-bit values, a uint16_t at a time, into your buffer from I/O port 0x1F0.
                 // (In assembler, REP INSW works well for this.)
-                asm!("rep insw",
+                core::arch::asm!("rep insw",
                     in("dx") self.ports.io_base,
                     in("rdi") &target[i as usize * 512usize ],
                     in("cx") 256usize,

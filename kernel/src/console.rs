@@ -1,12 +1,14 @@
 use crate::display::get_display_sure;
 use core::fmt::Arguments;
 use core::fmt::Write;
-use embedded_graphics::fonts::Text;
+use embedded_graphics::mono_font::MonoTextStyleBuilder;
 use embedded_graphics::pixelcolor::Rgb888;
 use embedded_graphics::prelude::*;
-use embedded_graphics::primitives::Line;
-use embedded_graphics::style::{PrimitiveStyle, TextStyleBuilder};
-use profont::ProFont12Point;
+use embedded_graphics::primitives::{Line, PrimitiveStyle};
+use embedded_graphics::text::Alignment;
+use embedded_graphics::text::Text;
+use embedded_graphics::text::TextStyleBuilder;
+use profont::PROFONT_12_POINT;
 
 once_mutex!(pub CONSOLE: Console);
 
@@ -65,14 +67,17 @@ impl Console {
     pub fn write_char_at(&mut self, x: usize, y: usize, c: char) {
         let mut buf = [0u8; 2];
         let str_c = c.encode_utf8(&mut buf);
-        Text::new(
+        Text::with_text_style(
             str_c,
             Point::new(x as i32 * FONT_X as i32, y as i32 * FONT_Y as i32),
-        )
-        .into_styled(
-            TextStyleBuilder::new(ProFont12Point)
+            MonoTextStyleBuilder::new()
+                .font(&profont::PROFONT_12_POINT)
                 .text_color(Rgb888::WHITE)
                 .background_color(Rgb888::BLACK)
+                .build(),
+            TextStyleBuilder::new()
+                .alignment(Alignment::Left)
+                .baseline(embedded_graphics::text::Baseline::Top)
                 .build(),
         )
         .draw(&mut *get_display_sure())

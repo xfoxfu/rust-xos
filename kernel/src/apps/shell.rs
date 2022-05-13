@@ -88,28 +88,28 @@ fn run_program_launch() {
     // 开中断
     interrupts::enable();
     unsafe {
-        asm!("
+        core::arch::asm!("
                 push rbp
                 int {id}
                 pop rbp",
             id = const 0x80,
             in("rax") crate::interrupts::Syscall::SpawnProcess as u64,
-            in("rbx") 0,
-            in("rcx") 0,
+            in("rdi") 0,
+            in("rsi") 0,
         );
     }
 }
 
 fn run_process(entry: u64, stacktop: u64) {
     unsafe {
-        asm!("
+        core::arch::asm!("
             push rbp
             int {id}
             pop rbp",
             id = const 0x80,
             in("rax") crate::interrupts::Syscall::SpawnProcess as u64,
-            in("rbx") entry,
-            in("rcx") stacktop,
+            in("rdi") entry,
+            in("rsi") stacktop,
         );
     }
 }

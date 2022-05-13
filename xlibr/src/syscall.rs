@@ -14,7 +14,7 @@ pub enum Syscall {
 
 pub fn syscall(id: u64, arg0: u64, arg1: u64, arg2: u64) {
     unsafe {
-        asm!("int {id}", id = const 0x80, in("rax") id, in("rbx") arg0, in("rcx") arg1, in("rdx") arg2);
+        core::arch::asm!("int {id}", id = const 0x80, in("rax") id, in("rdi") arg0, in("rsi") arg1, in("rdx") arg2);
     }
 }
 

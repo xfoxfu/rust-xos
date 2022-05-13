@@ -66,8 +66,8 @@ pub struct BootInfoFrameAllocator {
 
 fn create_frame_iter(memory_map: &'static MemoryMap) -> BootInfoFrameIter {
     memory_map
-        .clone()
         .iter
+        .iter()
         // 获得可用内存列表
         .filter(|r| r.ty == MemoryType::CONVENTIONAL)
         // 转换为段内可用起始地址列表（4KiB对齐）

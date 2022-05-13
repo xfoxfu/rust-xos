@@ -8,7 +8,7 @@ pub static KEY_BUFFER: Once<ArrayQueue<DecodedKey>> = Once::new();
 const DEFAULT_CAPACITY: usize = 80;
 
 pub fn buffer<'a>() -> &'a ArrayQueue<DecodedKey> {
-    &KEY_BUFFER.r#try().unwrap()
+    &KEY_BUFFER.get().unwrap()
 }
 
 /// 初始化键盘输入设备
@@ -21,7 +21,7 @@ pub unsafe fn init() {
 
 /// 读取按键，非阻塞
 pub fn get_key() -> Option<DecodedKey> {
-    x86_64::instructions::interrupts::without_interrupts(|| buffer().pop().ok())
+    x86_64::instructions::interrupts::without_interrupts(|| buffer().pop())
 }
 
 /// 读取按键，阻塞直到存在按键

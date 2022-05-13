@@ -153,10 +153,12 @@ pub fn switch_first_ready_process(sf: &mut InterruptStackFrame, regs: &mut Regis
         // 2b. 若非当前进程，则需要进行切换
         if prev_id == None || proc.id != prev_id.unwrap() {
             unsafe {
-                let sf_mut = sf.as_mut();
-                sf_mut.instruction_pointer = proc.state_isf.instruction_pointer;
-                sf_mut.stack_pointer = proc.state_isf.stack_pointer;
-                sf_mut.cpu_flags = proc.state_isf.cpu_flags;
+                // let sf_mut = sf.as_mut();
+                sf.as_mut().update(|sf_mut| {
+                    sf_mut.instruction_pointer = proc.state_isf.instruction_pointer;
+                    sf_mut.stack_pointer = proc.state_isf.stack_pointer;
+                    sf_mut.cpu_flags = proc.state_isf.cpu_flags;
+                });
                 *regs = proc.state_reg.clone();
                 // 更新 Cr3 后会自动刷新 TLB
                 Cr3::write(proc.page_table_addr.0, proc.page_table_addr.1);

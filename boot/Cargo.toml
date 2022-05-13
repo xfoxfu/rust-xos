@@ -15,10 +15,11 @@ description = "x86_64 UEFI BootLoader"
 elf-loader = { path = "../elf-loader" }
 log = "0.4"
 rlibc = "1.0"
-uefi = "0.4"
-uefi-services = { version = "0.2.4", optional = true }
-x86_64 = "0.11"
-xmas-elf = "0.7"
+uefi = "0.15.2"
+uefi-services = { version = "0.12.1", optional = true }
+x86_64 = "0.14.9"
+xmas-elf = "0.8.0"
+arrayvec = { version = "0.7.2", default-features = false }
 
 [features]
 rboot = ["uefi-services"]

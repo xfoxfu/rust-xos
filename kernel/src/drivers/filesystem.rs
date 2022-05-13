@@ -9,7 +9,7 @@ pub type OsEntry = Entry<'static, OsDevice>;
 pub static FS: spin::Once<OsDevice> = spin::Once::new();
 
 pub fn fs() -> &'static OsDevice {
-    FS.r#try().unwrap()
+    FS.get().unwrap()
 }
 
 pub fn init() {

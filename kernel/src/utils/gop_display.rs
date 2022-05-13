@@ -1,6 +1,9 @@
 use boot::GraphicInfo;
 use embedded_graphics::pixelcolor::{Rgb888, RgbColor};
-use embedded_graphics::{drawable::Pixel, geometry::Size, DrawTarget};
+use embedded_graphics::prelude::Point;
+use embedded_graphics::prelude::{Dimensions, OriginDimensions};
+use embedded_graphics::primitives::Rectangle;
+use embedded_graphics::{draw_target::DrawTarget, geometry::Size, Pixel};
 
 #[derive(Debug)]
 pub enum DisplayError {
@@ -76,23 +79,30 @@ impl<'a> GOPDisplay<'a> {
     }
 }
 
-impl<'a> DrawTarget<Rgb888> for GOPDisplay<'a> {
+impl<'a> OriginDimensions for GOPDisplay<'a> {
+    fn size(&self) -> Size {
+        Size::new(self.resolution().0 as u32, self.resolution().1 as u32)
+    }
+}
+
+impl<'a> DrawTarget for GOPDisplay<'a> {
+    type Color = Rgb888;
     type Error = DisplayError;
 
-    fn draw_pixel(&mut self, pixel: Pixel<Rgb888>) -> Result<(), Self::Error> {
-        let Pixel(coord, color) = pixel;
+    fn draw_iter<I>(&mut self, pixels: I) -> Result<(), Self::Error>
+    where
+        I: IntoIterator<Item = Pixel<Self::Color>>,
+    {
+        for pixel in pixels {
+            let Pixel(coord, color) = pixel;
 
-        self.set_pixel(
-            coord.x as usize,
-            coord.y as usize,
-            // FIXME: currently only support BGR LE
-            (color.r() as u32) << 16 | (color.g() as u32) << 8 | (color.b() as u32),
-        )?;
-
+            self.set_pixel(
+                coord.x as usize,
+                coord.y as usize,
+                // FIXME: currently only support BGR LE
+                (color.r() as u32) << 16 | (color.g() as u32) << 8 | (color.b() as u32),
+            )?;
+        }
         Ok(())
-    }
-    fn size(&self) -> Size {
-        let (x, y) = self.0.mode.resolution();
-        Size::new(x as u32, y as u32)
     }
 }

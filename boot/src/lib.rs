@@ -6,7 +6,7 @@ pub use uefi::data_types::chars::*;
 pub use uefi::data_types::*;
 pub use uefi::prelude::SystemTable;
 pub use uefi::proto::console::gop::{GraphicsOutput, ModeInfo};
-pub use uefi::table::boot::{MemoryAttribute, MemoryDescriptor, MemoryMapIter, MemoryType};
+pub use uefi::table::boot::{MemoryAttribute, MemoryDescriptor, MemoryType};
 pub use uefi::table::runtime::*;
 pub use uefi::table::Runtime;
 pub use uefi::Status as UefiStatus;
@@ -28,7 +28,7 @@ pub struct BootInfo {
 }
 
 pub struct MemoryMap {
-    pub iter: MemoryMapIter<'static>,
+    pub iter: arrayvec::ArrayVec<MemoryDescriptor, 1000>,
 }
 
 /// Graphic output information
@@ -53,7 +53,7 @@ impl fmt::Debug for MemoryMap {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut f = f.debug_list();
         for mmap in self.clone().iter {
-            f.entry(mmap);
+            f.entry(&mmap);
         }
         f.finish()
     }

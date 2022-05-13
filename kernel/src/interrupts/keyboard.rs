@@ -43,11 +43,11 @@ pub fn receive() -> Option<DecodedKey> {
     None
 }
 
-pub extern "x86-interrupt" fn interrupt_handler(_stack_frame: &mut InterruptStackFrame) {
+pub extern "x86-interrupt" fn interrupt_handler(_stack_frame: InterruptStackFrame) {
     super::ack(super::consts::IRQ::Keyboard as u8);
     if let Some(key) = receive() {
         trace!("key readed {:?}", key);
-        if let Some(buf) = crate::drivers::keyboard::KEY_BUFFER.r#try() {
+        if let Some(buf) = crate::drivers::keyboard::KEY_BUFFER.get() {
             buf.push(key).unwrap();
         } else {
             trace!(

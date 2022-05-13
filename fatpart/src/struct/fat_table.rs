@@ -9,7 +9,7 @@ pub struct FAT16Table<'a> {
 
 impl<'a> FAT16Table<'a> {
     pub fn new(bpb: &'a FAT16BPB, data: &'a [u8]) -> Result<Self, usize> {
-        if data.len() < (bpb.sector_per_fat * bpb.bytes_per_sector) as usize {
+        if data.len() < (bpb.sector_per_fat as usize * bpb.bytes_per_sector as usize) {
             Err(data.len())?
         }
 
